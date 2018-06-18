@@ -1,5 +1,11 @@
 server:
   port: 8450
+c2s-sof-ui-config:
+  grant-type: authorization_code
+  client-id: c2s_sof_app
+  launch-uri: http://localhost:9000/launch
+  redirect-uri: http://localhost:9000
+  scope: patient/Patient.read patient/Consent.* launch launch/organization launch/patient openid profile
 c2s-sof-api:
   fhir:
     serverUrl: https://ocpdevfhir.consent2share.org/fhir/baseDstu3
