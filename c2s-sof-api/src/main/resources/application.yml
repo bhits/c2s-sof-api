@@ -1,0 +1,36 @@
+server:
+  port: 8450
+c2s-sof-api:
+  fhir:
+    serverUrl: https://ocpdevfhir.consent2share.org/fhir/baseDstu3
+    clientSocketTimeoutInMs: 768000
+    encoding: json
+    defaultResourceBundlePageSize: 10
+  ResourceSinglePageLimit: 100
+  consent:
+    identifier-system: https://bhits.github.io/consent2share/
+    codeSystem: http://hl7.org/fhir/v3/ActCode
+    pagination:
+      default-size: 20
+  practitioner:
+    pagination:
+      default-size: 20
+  organization:
+    pagination:
+      default-size: 20
+    mrn:
+      codeSystem: https://bhits.github.io/consent2share
+      codeSystemOID: 2.16.840.1.113883.3.468.2
+      displayName: MRN/EID
+      prefix: OCP-DEV
+      length: 10
+  pdf:
+    pdfConfigs:
+      - type: consent-pdf
+        title: Consent to Share My Health Information
+        pdFont: TIMES_ROMAN
+        pdfPageSize: LETTER
+      - type: consent-revocation-pdf
+        title: Revocation of Consent to Share My Health Information
+        pdFont: TIMES_ROMAN
+        pdfPageSize: LETTER
