@@ -73,6 +73,30 @@ public class LookUpServiceImpl implements LookUpService {
         return valueSets;
     }
 
+    @Override
+    public List<ValueSetDto> getSecurityRole() {
+        List<ValueSetDto> securityRoleList = new ArrayList<>();
+        ValueSet response = getValueSets(LookupPathUrls.CONSENT_SECURITY_ROLE.getUrlPath(), LookupPathUrls.CONSENT_SECURITY_ROLE.getType());
+        if (LookUpUtil.isValueSetAvailableInServer(response, LookupPathUrls.CONSENT_SECURITY_ROLE.getType())) {
+            List<ValueSet.ValueSetExpansionContainsComponent> valueSetList = response.getExpansion().getContains();
+            securityRoleList = valueSetList.stream().map(LookUpUtil::convertExpansionComponentToValueSetDto).collect(Collectors.toList());
+        }
+        log.info("Found " + securityRoleList.size() + " security role.");
+        return securityRoleList;
+    }
+
+    @Override
+    public List<ValueSetDto> getConsentAction() {
+        List<ValueSetDto> consentActionList = new ArrayList<>();
+        ValueSet response = getValueSets(LookupPathUrls.CONSENT_ACTION.getUrlPath(), LookupPathUrls.CONSENT_ACTION.getType());
+        if (LookUpUtil.isValueSetAvailableInServer(response, LookupPathUrls.CONSENT_ACTION.getType())) {
+            List<ValueSet.ValueSetExpansionContainsComponent> valueSetList = response.getExpansion().getContains();
+            consentActionList = valueSetList.stream().map(LookUpUtil::convertExpansionComponentToValueSetDto).collect(Collectors.toList());
+        }
+        log.info("Found " + consentActionList.size() + " consent Action.");
+        return consentActionList;
+    }
+
 
 
 }

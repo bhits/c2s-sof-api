@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -39,7 +40,7 @@ public class PatientServiceImpl implements PatientService {
     }
 
     @Override
-    public PatientDto getPatientById(String patientId, String token) {
+    public PatientDto getPatientById(String patientId, Optional<String> token) {
 
         Bundle patientBundle = fhirClient.search().forResource(Patient.class)
                 .where(new TokenClientParam("_id").exactly().code(patientId))

@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Optional;
+
 @Slf4j
 @RestController
 @RequestMapping("/patients")
@@ -20,6 +22,6 @@ public class PatientController {
 
     @GetMapping("/{patientId}")
     public PatientDto getPatientById(@RequestHeader("Authorization") String token,@PathVariable String patientId) {
-        return patientService.getPatientById(patientId, token);
+        return patientService.getPatientById(patientId, Optional.of(token));
     }
 }

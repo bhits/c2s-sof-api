@@ -36,6 +36,10 @@ public class ConfigProperties {
     @Max(1000)
     private int ResourceSinglePageLimit;
 
+    @NotNull
+    @Valid
+    private Consent consent;
+
 
     @Data
     public static class Fhir {
