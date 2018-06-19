@@ -1,6 +1,6 @@
 package gov.samhsa.c2s.c2ssofapi.service.mapping;
 
-import gov.samhsa.ocp.ocpfis.service.dto.ValueSetDto;
+import gov.samhsa.c2s.c2ssofapi.service.dto.ValueSetDto;
 import org.hl7.fhir.dstu3.model.CodeableConcept;
 import org.modelmapper.AbstractConverter;
 import org.springframework.stereotype.Component;
