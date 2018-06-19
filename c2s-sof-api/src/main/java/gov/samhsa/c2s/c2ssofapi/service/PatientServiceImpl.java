@@ -1,6 +1,7 @@
 package gov.samhsa.c2s.c2ssofapi.service;
 
 import ca.uhn.fhir.rest.client.api.IGenericClient;
+import ca.uhn.fhir.rest.client.interceptor.BearerTokenAuthInterceptor;
 import ca.uhn.fhir.rest.gclient.TokenClientParam;
 import gov.samhsa.c2s.c2ssofapi.config.ConfigProperties;
 import gov.samhsa.c2s.c2ssofapi.service.dto.PatientDto;
@@ -42,6 +43,8 @@ public class PatientServiceImpl implements PatientService {
     @Override
     public PatientDto getPatientById(String patientId, Optional<String> token) {
 
+        BearerTokenAuthInterceptor authInterceptor = new BearerTokenAuthInterceptor(token.get());
+        fhirClient.registerInterceptor(authInterceptor);
         Bundle patientBundle = fhirClient.search().forResource(Patient.class)
                 .where(new TokenClientParam("_id").exactly().code(patientId))
                 .revInclude(Flag.INCLUDE_PATIENT)
