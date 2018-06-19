@@ -1,7 +1,9 @@
 package gov.samhsa.c2s.c2ssofapi.service;
 
+import ca.uhn.fhir.model.api.Include;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.IQuery;
+import ca.uhn.fhir.rest.gclient.ReferenceClientParam;
 import ca.uhn.fhir.rest.gclient.TokenClientParam;
 import gov.samhsa.c2s.c2ssofapi.config.ConfigProperties;
 import gov.samhsa.c2s.c2ssofapi.service.dto.PageDto;
@@ -152,6 +154,45 @@ public class PractitionerServiceImpl implements PractitionerService {
 
         return new PageDto<>(practitionersList, numberOfPractitionersPerPage, totalPages, currentPage, practitionersList.size(),
                 otherPagePractitionerBundle.getTotal());
+    }
+
+
+    @Override
+    public PageDto<PractitionerDto> getPractitionersByOrganizationAndRole(String organization, Optional<String> role, Optional<Integer> pageNumber, Optional<Integer> pageSize) {
+        int numberOfPractitionersPerPage = PaginationUtil.getValidPageSize(configProperties, pageSize, ResourceType.Practitioner.name());
+        List<PractitionerDto> practitioners = new ArrayList<>();
+
+        IQuery query = fhirClient.search().forResource(PractitionerRole.class).sort().descending(PARAM_LASTUPDATED);
+
+        role.ifPresent(s -> query.where(new TokenClientParam("role").exactly().code(s)));
+
+        List<Bundle.BundleEntryComponent> practitionerEntry = getBundleForPractitioners(organization, query);
+        practitioners = getPractitionerDtos(practitioners, practitionerEntry);
+
+        return (PageDto<PractitionerDto>) PaginationUtil.applyPaginationForCustomArrayList(practitioners, numberOfPractitionersPerPage, pageNumber, false);
+    }
+
+    private List<PractitionerDto> getPractitionerDtos(List<PractitionerDto> practitioners, List<Bundle.BundleEntryComponent> bundleEntry) {
+        if (bundleEntry != null && !bundleEntry.isEmpty()) {
+            practitioners = bundleEntry.stream()
+                    .filter(it -> it.getResource().getResourceType().equals(ResourceType.Practitioner))
+                    .map(it -> (Practitioner) it.getResource())
+                    .map(it -> {
+                        PractitionerDto practitionerDto = modelMapper.map(it, PractitionerDto.class);
+                        practitionerDto.setLogicalId(it.getIdElement().getIdPart());
+                        return practitionerDto;
+                    }).distinct()
+                    .collect(toList());
+        }
+        return practitioners;
+    }
+
+    private List<Bundle.BundleEntryComponent> getBundleForPractitioners(String organization, IQuery query) {
+        Bundle practitionerBundle = (Bundle) query.where(new ReferenceClientParam("organization").hasId(organization))
+                .include(new Include("PractitionerRole:practitioner"))
+                .returnBundle(Bundle.class)
+                .execute();
+        return FhirUtil.getAllBundleComponentsAsList(practitionerBundle, Optional.empty(), fhirClient, configProperties);
     }
 
 }

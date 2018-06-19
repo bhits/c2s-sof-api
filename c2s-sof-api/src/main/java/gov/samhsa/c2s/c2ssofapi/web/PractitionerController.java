@@ -34,4 +34,11 @@ public class PractitionerController {
         return practitionerService.searchPractitioners(searchType, searchValue, organization, showInactive, page, size,showAll);
     }
 
+
+    @GetMapping
+    public PageDto<PractitionerDto> getPractitionersByOrganizationAndRole(@RequestParam String organization, @RequestParam Optional<String> role,@RequestParam Optional<Integer> page, @RequestParam Optional<Integer> size) {
+        return practitionerService.getPractitionersByOrganizationAndRole(organization, role, page, size);
+    }
+
+
 }
