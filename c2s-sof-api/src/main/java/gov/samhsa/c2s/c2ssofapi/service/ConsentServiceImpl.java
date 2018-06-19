@@ -122,10 +122,11 @@ public class ConsentServiceImpl implements ConsentService {
 
         List<Bundle.BundleEntryComponent> consentBundleEntryWithCareTeam = FhirUtil.getAllBundleComponentsAsList(consentBundleWithCareTeam,Optional.of(numberOfConsentsPerPage),fhirClient,configProperties);
 
-
+        List<Bundle.BundleEntryComponent> bundleEntryComponentList = new ArrayList<>();
+        if (!practitioner.isPresent()) {
+            bundleEntryComponentList.addAll(consentBundleEntryWithCareTeam);
+        }
         //Get consent according to the practitioner.
-        List<Bundle.BundleEntryComponent> bundleEntryComponentList=new ArrayList<>();
-        bundleEntryComponentList.addAll(consentBundleEntryWithCareTeam);
         practitioner.ifPresent(pr->{
             Bundle bundle= (Bundle) getConsentIQuery(patient,Optional.empty(),status,generalDesignation).returnBundle(Bundle.class).execute();
             List<Bundle.BundleEntryComponent> consents=FhirUtil.getAllBundleComponentsAsList(bundle, Optional.ofNullable(numberOfConsentsPerPage),fhirClient,configProperties)
