@@ -53,6 +53,17 @@ public class OrganizationServiceImpl implements OrganizationService {
     }
 
     @Override
+    public OrganizationDto getOrganization(String organizationId) {
+        final Organization retrievedOrganization = fhirClient.read().resource(Organization.class).withId(organizationId).execute();
+        if (retrievedOrganization == null || retrievedOrganization.isEmpty()) {
+            throw new OrganizationNotFoundException("No organizations were found in the FHIR server.");
+        }
+        final OrganizationDto organizationDto = modelMapper.map(retrievedOrganization, OrganizationDto.class);
+        organizationDto.setLogicalId(retrievedOrganization.getIdElement().getIdPart());
+        return organizationDto;
+    }
+
+    @Override
     public PageDto<OrganizationDto> getAllOrganizations(Optional<Boolean> showInactive, Optional<Integer> page, Optional<Integer> size) {
         int numberOfOrganizationsPerPage = PaginationUtil.getValidPageSize(configProperties, size, ResourceType.Organization.name());
 

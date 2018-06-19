@@ -5,6 +5,7 @@ import gov.samhsa.c2s.c2ssofapi.service.dto.OrganizationDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.PageDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,6 +21,11 @@ public class OrganizationController {
 
     @Autowired
     private OrganizationService organizationService;
+
+    @GetMapping("/{organizationId}")
+    public OrganizationDto getOrganization(@PathVariable String organizationId) {
+        return organizationService.getOrganization(organizationId);
+    }
 
     // Todo: Resolve endpoint conflicts with getOrganizationsByPractitioner
     @GetMapping("all")
