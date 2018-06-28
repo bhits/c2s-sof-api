@@ -3,6 +3,7 @@ package gov.samhsa.c2s.c2ssofapi.service.pdf;
 import gov.samhsa.c2s.c2ssofapi.config.PdfProperties;
 import gov.samhsa.c2s.c2ssofapi.service.dto.AbstractCareTeamDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.AddressDto;
+import gov.samhsa.c2s.c2ssofapi.service.dto.AttestConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.DetailedConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.PatientDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.ReferenceDto;
@@ -12,14 +13,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
+import sun.misc.BASE64Decoder;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -48,7 +54,7 @@ public class ConsentPdfGeneratorWithHexPdfImpl implements ConsentPdfGenerator {
     }
 
     @Override
-    public byte[] generateConsentPdf(DetailedConsentDto detailedConsent, PatientDto patientDto, Boolean operatedByPatient) throws IOException {
+    public byte[] generateConsentPdf(DetailedConsentDto detailedConsent, PatientDto patientDto, Boolean operatedByPatient, Optional<String> signatureDataUrl) throws IOException {
         Assert.notNull(detailedConsent, "Consent is required.");
 
         String consentTitle = getConsentTitle(CONSENT_PDF);
@@ -82,6 +88,8 @@ public class ConsentPdfGeneratorWithHexPdfImpl implements ConsentPdfGenerator {
         if (detailedConsent.getStatus().equalsIgnoreCase("Active")) {
             addConsentSigningDetails(document, patientDto, operatedByPatient);
         }
+
+        drawSignature(document, signatureDataUrl.get());
 
         // Get the document
         return document.getDocumentAsBytArray();
@@ -369,6 +377,27 @@ public class ConsentPdfGeneratorWithHexPdfImpl implements ConsentPdfGenerator {
         final String signedOn = "Signed on: ".concat(formatLocalDate(signedDate, DATE_FORMAT_PATTERN));
 
         return signedByContent.concat(NEWLINE_CHARACTER).concat(signedByEmail).concat(NEWLINE_CHARACTER).concat(signedOn).concat(NEWLINE_CHARACTER);
+    }
+
+    private void drawSignature(HexPDF document, String signatureDataUrl){
+        BufferedImage basemap = decodeToImage(signatureDataUrl);
+        document.drawImage(basemap, HexPDF.CENTER);
+    }
+
+    private BufferedImage decodeToImage(String imageString) {
+
+        BufferedImage image = null;
+        byte[] imageByte;
+        try {
+            BASE64Decoder decoder = new BASE64Decoder();
+            imageByte = decoder.decodeBuffer(imageString);
+            ByteArrayInputStream bis = new ByteArrayInputStream(imageByte);
+            image = ImageIO.read(bis);
+            bis.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return image;
     }
 
     private  String formatLocalDate(LocalDate localDate, String formatPattern) {

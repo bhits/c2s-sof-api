@@ -303,7 +303,7 @@ public class ConsentServiceImpl implements ConsentService {
                 String patientID = consentDto.getPatient().getReference().replace("Patient/", "");
                 PatientDto patientDto = patientService.getPatientById(patientID,null);
                 log.info("Generating consent PDF");
-                byte[] pdfBytes = consentPdfGenerator.generateConsentPdf(detailedConsentDto, patientDto, operatedByPatient);
+                byte[] pdfBytes = consentPdfGenerator.generateConsentPdf(detailedConsentDto, patientDto, operatedByPatient, Optional.empty());
                 detailedConsentDto.setSourceAttachment(pdfBytes);
             }
 
@@ -362,7 +362,7 @@ public class ConsentServiceImpl implements ConsentService {
 
         try {
             log.info("Updating consent: Generating the attested PDF");
-            byte[] pdfBytes = consentPdfGenerator.generateConsentPdf(detailedConsentDto, patientDto, operatedByPatient);
+            byte[] pdfBytes = consentPdfGenerator.generateConsentPdf(detailedConsentDto, patientDto, operatedByPatient, Optional.of(attestConsentDto.getSignatureDataURL()));
             consent.setSource(addAttachment(pdfBytes));
 
         } catch (IOException e) {
@@ -414,7 +414,7 @@ public class ConsentServiceImpl implements ConsentService {
 
         try {
             log.info("Generating consent PDF");
-            byte[] pdfBytes = consentPdfGenerator.generateConsentPdf(detailedConsentDto, patientDto, operatedByPatient);
+            byte[] pdfBytes = consentPdfGenerator.generateConsentPdf(detailedConsentDto, patientDto, operatedByPatient, Optional.empty());
             return new PdfDto(pdfBytes);
 
         } catch (IOException e) {
