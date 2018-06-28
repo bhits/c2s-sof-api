@@ -3,17 +3,16 @@ package gov.samhsa.c2s.c2ssofapi.service.pdf;
 import gov.samhsa.c2s.c2ssofapi.config.PdfProperties;
 import gov.samhsa.c2s.c2ssofapi.service.dto.AbstractCareTeamDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.AddressDto;
-import gov.samhsa.c2s.c2ssofapi.service.dto.AttestConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.DetailedConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.PatientDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.ReferenceDto;
 import gov.samhsa.c2s.c2ssofapi.service.exception.NoDataFoundException;
 import gov.samhsa.c2s.c2ssofapi.service.exception.PdfConfigMissingException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
-import sun.misc.BASE64Decoder;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -222,7 +221,7 @@ public class ConsentPdfGeneratorWithHexPdfImpl implements ConsentPdfGenerator {
 
 
         float[] actorTableColumnWidth = new float[]{160, 40, 80, 120, 80};
-        int[] providerTableColumnAlignment = new int[]{HexPDF.LEFT, HexPDF.LEFT,HexPDF.LEFT, HexPDF.LEFT, HexPDF.LEFT};
+        int[] providerTableColumnAlignment = new int[]{HexPDF.LEFT, HexPDF.LEFT, HexPDF.LEFT, HexPDF.LEFT, HexPDF.LEFT};
 
         if (actors.size() > 0)
             document.drawTable(tableContentsForPractitioners,
@@ -244,7 +243,7 @@ public class ConsentPdfGeneratorWithHexPdfImpl implements ConsentPdfGenerator {
         for (int i = 0; i < actors.size(); i++) {
             tableContentsForCareTeams[i + 1][0] = "CareTeam";
             tableContentsForCareTeams[i + 1][1] = actors.get(i).getDisplay();
-            tableContentsForCareTeams[i + 1][2] = actors.get(i).getReference().replace("CareTeam/","");
+            tableContentsForCareTeams[i + 1][2] = actors.get(i).getReference().replace("CareTeam/", "");
         }
 
 
@@ -381,7 +380,7 @@ public class ConsentPdfGeneratorWithHexPdfImpl implements ConsentPdfGenerator {
         return signedByContent.concat(NEWLINE_CHARACTER).concat(signedByEmail).concat(NEWLINE_CHARACTER).concat(signedOn).concat(NEWLINE_CHARACTER);
     }
 
-    private void drawSignature(HexPDF document, String signatureDataUrl){
+    private void drawSignature(HexPDF document, String signatureDataUrl) {
         BufferedImage basemap = decodeToImage(signatureDataUrl);
         document.drawImage(basemap, HexPDF.CENTER);
     }
@@ -389,11 +388,12 @@ public class ConsentPdfGeneratorWithHexPdfImpl implements ConsentPdfGenerator {
     private BufferedImage decodeToImage(String imageString) {
 
         BufferedImage image = null;
-        byte[] imageByte;
         try {
-            BASE64Decoder decoder = new BASE64Decoder();
-            imageByte = decoder.decodeBuffer(imageString);
-            ByteArrayInputStream bis = new ByteArrayInputStream(imageByte);
+            String encodingPrefix = "base64,";
+            int contentStartIndex = imageString.indexOf(encodingPrefix) + encodingPrefix.length();
+            byte[] imageData = Base64.decodeBase64(imageString.substring(contentStartIndex));
+
+            ByteArrayInputStream bis = new ByteArrayInputStream(imageData);
             image = ImageIO.read(bis);
             bis.close();
         } catch (Exception e) {
@@ -402,7 +402,7 @@ public class ConsentPdfGeneratorWithHexPdfImpl implements ConsentPdfGenerator {
         return image;
     }
 
-    private  String formatLocalDate(LocalDate localDate, String formatPattern) {
+    private String formatLocalDate(LocalDate localDate, String formatPattern) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(formatPattern);
         return localDate.format(formatter);
     }
