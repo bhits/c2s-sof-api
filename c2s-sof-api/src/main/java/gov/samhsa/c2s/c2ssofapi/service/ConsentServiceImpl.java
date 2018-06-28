@@ -8,6 +8,7 @@ import ca.uhn.fhir.rest.gclient.TokenClientParam;
 import ca.uhn.fhir.validation.FhirValidator;
 import gov.samhsa.c2s.c2ssofapi.config.ConfigProperties;
 import gov.samhsa.c2s.c2ssofapi.service.dto.AbstractCareTeamDto;
+import gov.samhsa.c2s.c2ssofapi.service.dto.AttestConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.ConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.ConsentMedicalInfoType;
 import gov.samhsa.c2s.c2ssofapi.service.dto.DetailedConsentDto;
@@ -347,7 +348,7 @@ public class ConsentServiceImpl implements ConsentService {
     }
 
     @Override
-    public void attestConsent(String consentId) {
+    public void attestConsent(String consentId, AttestConsentDto attestConsentDto) {
 
         Consent consent = fhirClient.read().resource(Consent.class).withId(consentId.trim()).execute();
         consent.setStatus(Consent.ConsentState.ACTIVE);
