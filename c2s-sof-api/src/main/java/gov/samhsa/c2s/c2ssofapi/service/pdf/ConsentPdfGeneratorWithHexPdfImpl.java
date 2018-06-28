@@ -7,6 +7,7 @@ import gov.samhsa.c2s.c2ssofapi.service.dto.DetailedConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.PatientDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.ReferenceDto;
 import gov.samhsa.c2s.c2ssofapi.service.exception.NoDataFoundException;
+import gov.samhsa.c2s.c2ssofapi.service.exception.NoEmailFoundException;
 import gov.samhsa.c2s.c2ssofapi.service.exception.PdfConfigMissingException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -360,7 +361,7 @@ public class ConsentPdfGeneratorWithHexPdfImpl implements ConsentPdfGenerator {
                 .filter(telecomDto -> telecomDto.getSystem().get().equalsIgnoreCase(TELECOM_EMAIL))
                 .map(telecomDto -> telecomDto.getValue().get())
                 .findAny()
-                .orElseThrow(NoDataFoundException::new);
+                .orElseThrow(() -> new NoEmailFoundException("No Email Found for Patient" + patientFullName));
 
         LocalDate signedDate = signedOnDateTime.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 
