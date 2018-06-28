@@ -89,7 +89,9 @@ public class ConsentPdfGeneratorWithHexPdfImpl implements ConsentPdfGenerator {
             addConsentSigningDetails(document, patientDto, operatedByPatient);
         }
 
-        drawSignature(document, signatureDataUrl.get());
+        if (signatureDataUrl.isPresent()) {
+            drawSignature(document, signatureDataUrl.get());
+        }
 
         // Get the document
         return document.getDocumentAsBytArray();
