@@ -45,7 +45,7 @@ public class LookUpServiceImpl implements LookUpService {
 
     private ValueSet getValueSets(String urlPath, String type) {
         ValueSet response;
-        String url = configProperties.getFhir().getServerUrl() + urlPath;
+        String url = fhirClient.getServerBase() + urlPath;
         try {
             response = (ValueSet) fhirClient.search().byUrl(url).execute();
         } catch (ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException e) {

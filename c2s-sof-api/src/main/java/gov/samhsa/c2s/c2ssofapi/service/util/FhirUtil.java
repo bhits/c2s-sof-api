@@ -248,7 +248,7 @@ public class FhirUtil {
 
             while (updatedBundle.getLink(Bundle.LINK_NEXT) != null) {
                 int offset = ((pageNumber >= 1 ? pageNumber : 1) - 1) * pageSize;
-                String pageUrl = configProperties.getFhir().getServerUrl()
+                String pageUrl = fhirClient.getServerBase()
                         + "?_getpages=" + bundle.getId()
                         + "&_getpagesoffset=" + offset
                         + "&_count=" + pageSize

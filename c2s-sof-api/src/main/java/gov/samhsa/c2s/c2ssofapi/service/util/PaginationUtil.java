@@ -44,7 +44,7 @@ public final class PaginationUtil {
                 throw new ResourceNotFoundException("No resources were found in the FHIR server for the page number: " + pageNumber);
             }
 
-            String pageUrl = configProperties.getFhir().getServerUrl()
+            String pageUrl = fhirClient.getServerBase()
                     + "?" + PARAM_PAGINGACTION + "=" + SearchBundle.getId()
                     + "&" + PARAM_PAGINGOFFSET + "=" + offset
                     + "&" + PARAM_COUNT + "=" + pageSize

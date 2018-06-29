@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.NotBlank;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.validation.annotation.Validated;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Max;
@@ -16,6 +17,7 @@ import javax.validation.constraints.NotNull;
 
 @Configuration
 @ConfigurationProperties(prefix = "c2s-sof-api")
+@Validated
 @Data
 public class ConfigProperties {
 
@@ -40,21 +42,15 @@ public class ConfigProperties {
     @Valid
     private Consent consent;
 
-
     @Data
     public static class Fhir {
-
-        @NotBlank
-        private String serverUrl;
         @NotBlank
         private String clientSocketTimeoutInMs;
         @NotNull
         private EncodingEnum encoding = EncodingEnum.JSON;
         @NotNull
         private int defaultResourceBundlePageSize;
-
     }
-
 
     @Data
     @Builder
