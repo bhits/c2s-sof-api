@@ -17,6 +17,7 @@ import gov.samhsa.c2s.c2ssofapi.service.dto.PageDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.PatientDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.PdfDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.ReferenceDto;
+import gov.samhsa.c2s.c2ssofapi.service.dto.RevokeConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.ValueSetDto;
 import gov.samhsa.c2s.c2ssofapi.service.exception.ConsentPdfGenerationException;
 import gov.samhsa.c2s.c2ssofapi.service.exception.DuplicateResourceFoundException;
@@ -374,7 +375,7 @@ public class ConsentServiceImpl implements ConsentService {
     }
 
     @Override
-    public void revokeConsent(String consentId) {
+    public void revokeConsent(String consentId, RevokeConsentDto revokeConsentDto) {
 
         Consent consent = fhirClient.read().resource(Consent.class).withId(consentId.trim()).execute();
         consent.setStatus(Consent.ConsentState.INACTIVE);
