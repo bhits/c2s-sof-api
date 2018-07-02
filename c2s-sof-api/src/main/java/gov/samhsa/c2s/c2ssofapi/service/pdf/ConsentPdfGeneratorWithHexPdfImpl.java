@@ -382,7 +382,16 @@ public class ConsentPdfGeneratorWithHexPdfImpl implements ConsentPdfGenerator {
 
     private void drawSignature(HexPDF document, String signatureDataUrl) {
         BufferedImage basemap = decodeToImage(signatureDataUrl);
-        document.drawImage(basemap, HexPDF.CENTER);
+        ImageResizer imageResizer = new ImageResizer();
+
+        try {
+            BufferedImage resizedImage = imageResizer.resize(basemap, 0.25);
+            document.drawImage(resizedImage, HexPDF.LEFT);
+
+        } catch (IOException e) {
+            System.out.println("Error resizing the image.");
+            e.printStackTrace();
+        }
     }
 
     private BufferedImage decodeToImage(String imageString) {
