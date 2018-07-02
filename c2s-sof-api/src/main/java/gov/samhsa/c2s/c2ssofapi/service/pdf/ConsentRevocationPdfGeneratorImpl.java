@@ -4,11 +4,15 @@ package gov.samhsa.c2s.c2ssofapi.service.pdf;
 import gov.samhsa.c2s.c2ssofapi.service.dto.DetailedConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.PatientDto;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
 @Service
@@ -45,7 +49,7 @@ public class ConsentRevocationPdfGeneratorImpl implements ConsentRevocationPdfGe
 
 
     @Override
-    public byte[] generateConsentRevocationPdf(DetailedConsentDto detailedConsent, PatientDto patient, Boolean revokedByPatient) throws IOException {
+    public byte[] generateConsentRevocationPdf(DetailedConsentDto detailedConsent, PatientDto patient, Boolean revokedByPatient, String signatureDataUrl) throws IOException {
 
         Assert.notNull(detailedConsent, "Consent is required.");
 
@@ -76,8 +80,33 @@ public class ConsentRevocationPdfGeneratorImpl implements ConsentRevocationPdfGe
 
         consentPdfGenerator.addConsentSigningDetails(document, patient, revokedByPatient);
 
+        drawSignature(document, signatureDataUrl);
+
         // Get the document
         return document.getDocumentAsBytArray();
     }
+
+    private void drawSignature(HexPDF document, String signatureDataUrl) {
+        BufferedImage basemap = decodeToImage(signatureDataUrl);
+        document.drawImage(basemap, HexPDF.CENTER);
+    }
+
+    private BufferedImage decodeToImage(String imageString) {
+
+        BufferedImage image = null;
+        try {
+            String encodingPrefix = "base64,";
+            int contentStartIndex = imageString.indexOf(encodingPrefix) + encodingPrefix.length();
+            byte[] imageData = Base64.decodeBase64(imageString.substring(contentStartIndex));
+
+            ByteArrayInputStream bis = new ByteArrayInputStream(imageData);
+            image = ImageIO.read(bis);
+            bis.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return image;
+    }
+
 
 }

@@ -388,7 +388,7 @@ public class ConsentServiceImpl implements ConsentService {
 
         try {
             log.info("Updating consent: Generating the revocation PDF");
-            byte[] pdfBytes = consentRevocationPdfGenerator.generateConsentRevocationPdf(detailedConsentDto, patientDto, operatedByPatient);
+            byte[] pdfBytes = consentRevocationPdfGenerator.generateConsentRevocationPdf(detailedConsentDto, patientDto, operatedByPatient, revokeConsentDto.getSignatureDataURL());
             consent.setSource(addAttachment(pdfBytes));
 
         } catch (IOException e) {
