@@ -371,6 +371,9 @@ public class ConsentServiceImpl implements ConsentService {
         }
         //consent.getSourceAttachment().getData();
         log.info("Updating consent: Saving the consent into the FHIR server.");
+        //Validate
+        FhirUtil.validateFhirResource(fhirValidator, consent, Optional.empty(), ResourceType.Consent.name(), "Attest Consent");
+
         fhirClient.update().resource(consent).execute();
     }
 
@@ -396,6 +399,8 @@ public class ConsentServiceImpl implements ConsentService {
         }
         //consent.getSourceAttachment().getData();
         log.info("Updating consent: Saving the consent into the FHIR server.");
+        //Validate
+        FhirUtil.validateFhirResource(fhirValidator, consent, Optional.empty(), ResourceType.Consent.name(), "Attest Consent");
         fhirClient.update().resource(consent).execute();
     }
 
