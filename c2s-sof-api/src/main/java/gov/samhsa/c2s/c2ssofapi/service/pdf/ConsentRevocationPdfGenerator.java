@@ -7,6 +7,6 @@ import java.io.IOException;
 
 public interface ConsentRevocationPdfGenerator {
 
-    byte[] generateConsentRevocationPdf(DetailedConsentDto detailedConsent, PatientDto patient, Boolean revokedByPatient) throws IOException;
+    byte[] generateConsentRevocationPdf(DetailedConsentDto detailedConsent, PatientDto patient, Boolean revokedByPatient,String signatureDataUrl) throws IOException;
 
 }

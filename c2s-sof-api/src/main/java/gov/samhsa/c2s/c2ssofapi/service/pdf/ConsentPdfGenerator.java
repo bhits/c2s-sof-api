@@ -1,10 +1,12 @@
 package gov.samhsa.c2s.c2ssofapi.service.pdf;
 
 
+import gov.samhsa.c2s.c2ssofapi.service.dto.AttestConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.DetailedConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.PatientDto;
 
 import java.io.IOException;
+import java.util.Optional;
 
 public interface ConsentPdfGenerator {
     String getConsentTitle(String pdfType);
@@ -17,6 +19,6 @@ public interface ConsentPdfGenerator {
 
     void addConsentSigningDetails(HexPDF document, PatientDto patient, Boolean signedByPatient) throws IOException;
 
-    byte[] generateConsentPdf(DetailedConsentDto detailedConsent, PatientDto patientProfile, Boolean operatedByPatient) throws IOException;
+    byte[] generateConsentPdf(DetailedConsentDto detailedConsent, PatientDto patientProfile, Boolean operatedByPatient, Optional<String> signatureDataUrl) throws IOException;
 
 }

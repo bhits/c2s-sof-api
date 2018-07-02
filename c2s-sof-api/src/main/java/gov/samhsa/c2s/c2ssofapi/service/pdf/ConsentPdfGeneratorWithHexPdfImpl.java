@@ -10,17 +10,22 @@ import gov.samhsa.c2s.c2ssofapi.service.exception.NoDataFoundException;
 import gov.samhsa.c2s.c2ssofapi.service.exception.NoEmailFoundException;
 import gov.samhsa.c2s.c2ssofapi.service.exception.PdfConfigMissingException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -49,7 +54,7 @@ public class ConsentPdfGeneratorWithHexPdfImpl implements ConsentPdfGenerator {
     }
 
     @Override
-    public byte[] generateConsentPdf(DetailedConsentDto detailedConsent, PatientDto patientDto, Boolean operatedByPatient) throws IOException {
+    public byte[] generateConsentPdf(DetailedConsentDto detailedConsent, PatientDto patientDto, Boolean operatedByPatient, Optional<String> signatureDataUrl) throws IOException {
         Assert.notNull(detailedConsent, "Consent is required.");
 
         String consentTitle = getConsentTitle(CONSENT_PDF);
@@ -82,6 +87,10 @@ public class ConsentPdfGeneratorWithHexPdfImpl implements ConsentPdfGenerator {
         // Consent signing details
         if (detailedConsent.getStatus().equalsIgnoreCase("Active")) {
             addConsentSigningDetails(document, patientDto, operatedByPatient);
+        }
+
+        if (signatureDataUrl.isPresent()) {
+            drawSignature(document, signatureDataUrl.get());
         }
 
         // Get the document
@@ -213,7 +222,7 @@ public class ConsentPdfGeneratorWithHexPdfImpl implements ConsentPdfGenerator {
 
 
         float[] actorTableColumnWidth = new float[]{160, 40, 80, 120, 80};
-        int[] providerTableColumnAlignment = new int[]{HexPDF.LEFT, HexPDF.LEFT,HexPDF.LEFT, HexPDF.LEFT, HexPDF.LEFT};
+        int[] providerTableColumnAlignment = new int[]{HexPDF.LEFT, HexPDF.LEFT, HexPDF.LEFT, HexPDF.LEFT, HexPDF.LEFT};
 
         if (actors.size() > 0)
             document.drawTable(tableContentsForPractitioners,
@@ -235,7 +244,7 @@ public class ConsentPdfGeneratorWithHexPdfImpl implements ConsentPdfGenerator {
         for (int i = 0; i < actors.size(); i++) {
             tableContentsForCareTeams[i + 1][0] = "CareTeam";
             tableContentsForCareTeams[i + 1][1] = actors.get(i).getDisplay();
-            tableContentsForCareTeams[i + 1][2] = actors.get(i).getReference().replace("CareTeam/","");
+            tableContentsForCareTeams[i + 1][2] = actors.get(i).getReference().replace("CareTeam/", "");
         }
 
 
@@ -372,7 +381,38 @@ public class ConsentPdfGeneratorWithHexPdfImpl implements ConsentPdfGenerator {
         return signedByContent.concat(NEWLINE_CHARACTER).concat(signedByEmail).concat(NEWLINE_CHARACTER).concat(signedOn).concat(NEWLINE_CHARACTER);
     }
 
-    private  String formatLocalDate(LocalDate localDate, String formatPattern) {
+    private void drawSignature(HexPDF document, String signatureDataUrl) {
+        BufferedImage basemap = decodeToImage(signatureDataUrl);
+        ImageResizer imageResizer = new ImageResizer();
+
+        try {
+            BufferedImage resizedImage = imageResizer.resize(basemap, 0.25);
+            document.drawImage(resizedImage, HexPDF.LEFT);
+
+        } catch (IOException e) {
+            System.out.println("Error resizing the image.");
+            e.printStackTrace();
+        }
+    }
+
+    private BufferedImage decodeToImage(String imageString) {
+
+        BufferedImage image = null;
+        try {
+            String encodingPrefix = "base64,";
+            int contentStartIndex = imageString.indexOf(encodingPrefix) + encodingPrefix.length();
+            byte[] imageData = Base64.decodeBase64(imageString.substring(contentStartIndex));
+
+            ByteArrayInputStream bis = new ByteArrayInputStream(imageData);
+            image = ImageIO.read(bis);
+            bis.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return image;
+    }
+
+    private String formatLocalDate(LocalDate localDate, String formatPattern) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(formatPattern);
         return localDate.format(formatter);
     }

@@ -2,11 +2,13 @@ package gov.samhsa.c2s.c2ssofapi.web;
 
 import gov.samhsa.c2s.c2ssofapi.service.ConsentService;
 import gov.samhsa.c2s.c2ssofapi.service.dto.AbstractCareTeamDto;
+import gov.samhsa.c2s.c2ssofapi.service.dto.AttestConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.ConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.DetailedConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.GeneralConsentRelatedFieldDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.PageDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.PdfDto;
+import gov.samhsa.c2s.c2ssofapi.service.dto.RevokeConsentDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -52,14 +54,14 @@ public class ConsentController {
 
     @PutMapping("/consents/{consentId}/attestation")
     @ResponseStatus(HttpStatus.OK)
-    public void attestConsent(@PathVariable String consentId) {
-        consentService.attestConsent(consentId);
+    public void attestConsent(@PathVariable String consentId, @Valid @RequestBody AttestConsentDto attestConsentDto) {
+        consentService.attestConsent(consentId, attestConsentDto);
     }
 
     @PutMapping("/consents/{consentId}/revocation")
     @ResponseStatus(HttpStatus.OK)
-    public void revokeConsent(@PathVariable String consentId) {
-        consentService.revokeConsent(consentId);
+    public void revokeConsent(@PathVariable String consentId, @Valid @RequestBody RevokeConsentDto revokeConsentDto) {
+        consentService.revokeConsent(consentId, revokeConsentDto);
     }
 
     @PostMapping("/consents")
@@ -71,17 +73,17 @@ public class ConsentController {
 
     @PutMapping("/consents/{consent}")
     @ResponseStatus(HttpStatus.OK)
-    public void updateConsent(@PathVariable String consent, @Valid @RequestBody ConsentDto consentDto){
+    public void updateConsent(@PathVariable String consent, @Valid @RequestBody ConsentDto consentDto) {
         consentService.updateConsent(consent, consentDto);
     }
 
     @GetMapping("/generalConsent/{patient}")
-    public GeneralConsentRelatedFieldDto getRelatedFieldForGeneralConsent(@PathVariable String patient){
+    public GeneralConsentRelatedFieldDto getRelatedFieldForGeneralConsent(@PathVariable String patient) {
         return consentService.getGeneralConsentRelatedFields(patient);
     }
 
     @GetMapping("/actors")
-    public PageDto<AbstractCareTeamDto> getActors(@RequestParam Optional<String> patient, @RequestParam Optional<String> name, Optional<String> actorType, @RequestParam Optional<List<String>> actorsAlreadyAssigned, @RequestParam Optional<Integer> pageNumber, @RequestParam Optional<Integer> pageSize){
-        return consentService.getActors(patient,name,actorType,actorsAlreadyAssigned, pageNumber, pageSize);
+    public PageDto<AbstractCareTeamDto> getActors(@RequestParam Optional<String> patient, @RequestParam Optional<String> name, Optional<String> actorType, @RequestParam Optional<List<String>> actorsAlreadyAssigned, @RequestParam Optional<Integer> pageNumber, @RequestParam Optional<Integer> pageSize) {
+        return consentService.getActors(patient, name, actorType, actorsAlreadyAssigned, pageNumber, pageSize);
     }
 }

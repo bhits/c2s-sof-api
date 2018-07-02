@@ -8,6 +8,7 @@ import ca.uhn.fhir.rest.gclient.TokenClientParam;
 import ca.uhn.fhir.validation.FhirValidator;
 import gov.samhsa.c2s.c2ssofapi.config.ConfigProperties;
 import gov.samhsa.c2s.c2ssofapi.service.dto.AbstractCareTeamDto;
+import gov.samhsa.c2s.c2ssofapi.service.dto.AttestConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.ConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.ConsentMedicalInfoType;
 import gov.samhsa.c2s.c2ssofapi.service.dto.DetailedConsentDto;
@@ -16,6 +17,7 @@ import gov.samhsa.c2s.c2ssofapi.service.dto.PageDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.PatientDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.PdfDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.ReferenceDto;
+import gov.samhsa.c2s.c2ssofapi.service.dto.RevokeConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.ValueSetDto;
 import gov.samhsa.c2s.c2ssofapi.service.exception.ConsentPdfGenerationException;
 import gov.samhsa.c2s.c2ssofapi.service.exception.DuplicateResourceFoundException;
@@ -302,7 +304,7 @@ public class ConsentServiceImpl implements ConsentService {
                 String patientID = consentDto.getPatient().getReference().replace("Patient/", "");
                 PatientDto patientDto = patientService.getPatientById(patientID,null);
                 log.info("Generating consent PDF");
-                byte[] pdfBytes = consentPdfGenerator.generateConsentPdf(detailedConsentDto, patientDto, operatedByPatient);
+                byte[] pdfBytes = consentPdfGenerator.generateConsentPdf(detailedConsentDto, patientDto, operatedByPatient, Optional.empty());
                 detailedConsentDto.setSourceAttachment(pdfBytes);
             }
 
@@ -347,7 +349,7 @@ public class ConsentServiceImpl implements ConsentService {
     }
 
     @Override
-    public void attestConsent(String consentId) {
+    public void attestConsent(String consentId, AttestConsentDto attestConsentDto) {
 
         Consent consent = fhirClient.read().resource(Consent.class).withId(consentId.trim()).execute();
         consent.setStatus(Consent.ConsentState.ACTIVE);
@@ -361,7 +363,7 @@ public class ConsentServiceImpl implements ConsentService {
 
         try {
             log.info("Updating consent: Generating the attested PDF");
-            byte[] pdfBytes = consentPdfGenerator.generateConsentPdf(detailedConsentDto, patientDto, operatedByPatient);
+            byte[] pdfBytes = consentPdfGenerator.generateConsentPdf(detailedConsentDto, patientDto, operatedByPatient, Optional.of(attestConsentDto.getSignatureDataURL()));
             consent.setSource(addAttachment(pdfBytes));
 
         } catch (IOException e) {
@@ -376,7 +378,7 @@ public class ConsentServiceImpl implements ConsentService {
     }
 
     @Override
-    public void revokeConsent(String consentId) {
+    public void revokeConsent(String consentId, RevokeConsentDto revokeConsentDto) {
 
         Consent consent = fhirClient.read().resource(Consent.class).withId(consentId.trim()).execute();
         consent.setStatus(Consent.ConsentState.INACTIVE);
@@ -389,7 +391,7 @@ public class ConsentServiceImpl implements ConsentService {
 
         try {
             log.info("Updating consent: Generating the revocation PDF");
-            byte[] pdfBytes = consentRevocationPdfGenerator.generateConsentRevocationPdf(detailedConsentDto, patientDto, operatedByPatient);
+            byte[] pdfBytes = consentRevocationPdfGenerator.generateConsentRevocationPdf(detailedConsentDto, patientDto, operatedByPatient, revokeConsentDto.getSignatureDataURL());
             consent.setSource(addAttachment(pdfBytes));
 
         } catch (IOException e) {
@@ -418,7 +420,7 @@ public class ConsentServiceImpl implements ConsentService {
 
         try {
             log.info("Generating consent PDF");
-            byte[] pdfBytes = consentPdfGenerator.generateConsentPdf(detailedConsentDto, patientDto, operatedByPatient);
+            byte[] pdfBytes = consentPdfGenerator.generateConsentPdf(detailedConsentDto, patientDto, operatedByPatient, Optional.empty());
             return new PdfDto(pdfBytes);
 
         } catch (IOException e) {
