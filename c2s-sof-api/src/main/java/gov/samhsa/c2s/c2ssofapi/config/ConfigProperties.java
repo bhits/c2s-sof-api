@@ -42,6 +42,10 @@ public class ConfigProperties {
     @Valid
     private Consent consent;
 
+    @NotNull
+    @Valid
+    private Patient patient;
+
     @Data
     public static class Fhir {
         @NotBlank
