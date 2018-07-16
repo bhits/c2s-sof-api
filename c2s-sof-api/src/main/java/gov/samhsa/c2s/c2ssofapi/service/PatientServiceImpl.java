@@ -3,6 +3,7 @@ package gov.samhsa.c2s.c2ssofapi.service;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.TokenClientParam;
 import gov.samhsa.c2s.c2ssofapi.config.ConfigProperties;
+import gov.samhsa.c2s.c2ssofapi.service.dto.IdentifierDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.PatientDto;
 import gov.samhsa.c2s.c2ssofapi.service.exception.ResourceNotFoundException;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +17,8 @@ import org.springframework.stereotype.Service;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
+
+import static java.util.stream.Collectors.toList;
 
 @Service
 @Slf4j
@@ -58,6 +61,8 @@ public class PatientServiceImpl implements PatientService {
         patientDto.setId(patient.getIdElement().getIdPart());
         patientDto.setBirthDate(patient.getBirthDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
         patientDto.setGenderCode(patient.getGender().toCode());
+        patientDto.setMrn(patientDto.getIdentifier().stream().filter(iden -> iden.getSystem().equalsIgnoreCase(configProperties.getPatient().getMrn().getCodeSystemOID())).findFirst().map(IdentifierDto::getValue));
+        patientDto.setIdentifier(patientDto.getIdentifier().stream().filter(iden -> !iden.getSystem().equalsIgnoreCase(configProperties.getPatient().getMrn().getCodeSystemOID())).collect(toList()));
 
         return patientDto;
     }

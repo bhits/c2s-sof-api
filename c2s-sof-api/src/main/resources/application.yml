@@ -23,6 +23,9 @@ c2s-sof-api:
   organization:
     pagination:
       default-size: 20
+  patient:
+    pagination:
+      default-size: 20
     mrn:
       codeSystem: https://bhits.github.io/consent2share
       codeSystemOID: 2.16.840.1.113883.3.468.2
