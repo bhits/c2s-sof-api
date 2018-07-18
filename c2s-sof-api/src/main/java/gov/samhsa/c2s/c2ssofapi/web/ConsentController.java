@@ -2,7 +2,6 @@ package gov.samhsa.c2s.c2ssofapi.web;
 
 import gov.samhsa.c2s.c2ssofapi.service.ConsentService;
 import gov.samhsa.c2s.c2ssofapi.service.dto.AbstractCareTeamDto;
-import gov.samhsa.c2s.c2ssofapi.service.dto.AttestConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.ConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.DetailedConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.GeneralConsentRelatedFieldDto;
@@ -54,8 +53,8 @@ public class ConsentController {
 
     @PutMapping("/consents/{consentId}/attestation")
     @ResponseStatus(HttpStatus.OK)
-    public void attestConsent(@PathVariable String consentId, @Valid @RequestBody AttestConsentDto attestConsentDto) {
-        consentService.attestConsent(consentId, attestConsentDto);
+    public void attestConsent(@PathVariable String consentId) {
+        consentService.attestConsent(consentId);
     }
 
     @PutMapping("/consents/{consentId}/revocation")

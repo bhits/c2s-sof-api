@@ -1,7 +1,6 @@
 package gov.samhsa.c2s.c2ssofapi.service;
 
 import gov.samhsa.c2s.c2ssofapi.service.dto.AbstractCareTeamDto;
-import gov.samhsa.c2s.c2ssofapi.service.dto.AttestConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.ConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.DetailedConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.GeneralConsentRelatedFieldDto;
@@ -26,7 +25,7 @@ public interface ConsentService {
 
     PdfDto createConsentPdf(String consentId);
 
-    void attestConsent(String consentId, AttestConsentDto attestConsentDto);
+    void attestConsent(String consentId);
 
     void revokeConsent(String consentId, RevokeConsentDto revokeConsentDto);
 

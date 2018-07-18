@@ -1,7 +1,6 @@
 package gov.samhsa.c2s.c2ssofapi.service.pdf;
 
 
-import gov.samhsa.c2s.c2ssofapi.service.dto.AttestConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.DetailedConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.PatientDto;
 
