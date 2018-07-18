@@ -16,7 +16,6 @@ import gov.samhsa.c2s.c2ssofapi.service.dto.PageDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.PatientDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.PdfDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.ReferenceDto;
-import gov.samhsa.c2s.c2ssofapi.service.dto.RevokeConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.ValueSetDto;
 import gov.samhsa.c2s.c2ssofapi.service.exception.ConsentPdfGenerationException;
 import gov.samhsa.c2s.c2ssofapi.service.exception.DuplicateResourceFoundException;
@@ -377,7 +376,7 @@ public class ConsentServiceImpl implements ConsentService {
     }
 
     @Override
-    public void revokeConsent(String consentId, RevokeConsentDto revokeConsentDto) {
+    public void revokeConsent(String consentId) {
 
         Consent consent = fhirClient.read().resource(Consent.class).withId(consentId.trim()).execute();
         consent.setStatus(Consent.ConsentState.INACTIVE);
@@ -390,7 +389,7 @@ public class ConsentServiceImpl implements ConsentService {
 
         try {
             log.info("Updating consent: Generating the revocation PDF");
-            byte[] pdfBytes = consentRevocationPdfGenerator.generateConsentRevocationPdf(detailedConsentDto, patientDto, operatedByPatient, revokeConsentDto.getSignatureDataURL());
+            byte[] pdfBytes = consentRevocationPdfGenerator.generateConsentRevocationPdf(detailedConsentDto, patientDto, operatedByPatient, Optional.empty());
             consent.setSource(addAttachment(pdfBytes));
 
         } catch (IOException e) {

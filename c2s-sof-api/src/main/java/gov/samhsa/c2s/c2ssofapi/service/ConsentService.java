@@ -6,7 +6,6 @@ import gov.samhsa.c2s.c2ssofapi.service.dto.DetailedConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.GeneralConsentRelatedFieldDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.PageDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.PdfDto;
-import gov.samhsa.c2s.c2ssofapi.service.dto.RevokeConsentDto;
 
 import java.util.List;
 import java.util.Optional;
@@ -27,7 +26,7 @@ public interface ConsentService {
 
     void attestConsent(String consentId);
 
-    void revokeConsent(String consentId, RevokeConsentDto revokeConsentDto);
+    void revokeConsent(String consentId);
 
     PageDto<AbstractCareTeamDto> getActors(Optional<String> patientId, Optional<String> name, Optional<String> actorType, Optional<List<String>> actorsAlreadyAssigned, Optional<Integer> pageNumber, Optional<Integer> pageSize);
 }

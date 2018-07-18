@@ -14,6 +14,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -49,7 +50,7 @@ public class ConsentRevocationPdfGeneratorImpl implements ConsentRevocationPdfGe
 
 
     @Override
-    public byte[] generateConsentRevocationPdf(DetailedConsentDto detailedConsent, PatientDto patient, Boolean revokedByPatient, String signatureDataUrl) throws IOException {
+    public byte[] generateConsentRevocationPdf(DetailedConsentDto detailedConsent, PatientDto patient, Boolean revokedByPatient, Optional<String> signatureDataUrl) throws IOException {
 
         Assert.notNull(detailedConsent, "Consent is required.");
 
@@ -80,7 +81,7 @@ public class ConsentRevocationPdfGeneratorImpl implements ConsentRevocationPdfGe
 
         consentPdfGenerator.addConsentSigningDetails(document, patient, revokedByPatient);
 
-        drawSignature(document, signatureDataUrl);
+        signatureDataUrl.ifPresent(s -> drawSignature(document, s));
 
         // Get the document
         return document.getDocumentAsBytArray();
