@@ -8,7 +8,6 @@ import ca.uhn.fhir.rest.gclient.TokenClientParam;
 import ca.uhn.fhir.validation.FhirValidator;
 import gov.samhsa.c2s.c2ssofapi.config.ConfigProperties;
 import gov.samhsa.c2s.c2ssofapi.service.dto.AbstractCareTeamDto;
-import gov.samhsa.c2s.c2ssofapi.service.dto.AttestConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.ConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.ConsentMedicalInfoType;
 import gov.samhsa.c2s.c2ssofapi.service.dto.DetailedConsentDto;
@@ -17,7 +16,6 @@ import gov.samhsa.c2s.c2ssofapi.service.dto.PageDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.PatientDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.PdfDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.ReferenceDto;
-import gov.samhsa.c2s.c2ssofapi.service.dto.RevokeConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.ValueSetDto;
 import gov.samhsa.c2s.c2ssofapi.service.exception.ConsentPdfGenerationException;
 import gov.samhsa.c2s.c2ssofapi.service.exception.DuplicateResourceFoundException;
@@ -61,12 +59,12 @@ import static java.util.stream.Collectors.toList;
 @Service
 @Slf4j
 public class ConsentServiceImpl implements ConsentService {
-    public static final String INFORMANT_CODE = "INF";
-    public static final String INFORMANT_RECIPIENT_CODE = "IRCP";
-    public static final String PSEUDO_ORGANIZATION_NAME = "Omnibus Care Plan (SAMHSA)";
-    public static final String PSEUDO_ORGANIZATION_TAX_ID = "530196960";
-    public static final String CONTENTTYPE = "application/pdf";
-    public static final Boolean operatedByPatient = true;
+    private static final String INFORMANT_CODE = "INF";
+    private static final String INFORMANT_RECIPIENT_CODE = "IRCP";
+    private static final String PSEUDO_ORGANIZATION_NAME = "Omnibus Care Plan (SAMHSA)";
+    private static final String PSEUDO_ORGANIZATION_TAX_ID = "530196960";
+    private static final String CONTENTTYPE = "application/pdf";
+    private static final Boolean operatedByPatient = true;
 
 
     private final IGenericClient fhirClient;
@@ -109,7 +107,7 @@ public class ConsentServiceImpl implements ConsentService {
 
         IQuery finalConsentQueryWithCareTeam = consentQueryWithCareTeam;
 
-        if(!status.isPresent()) {
+        if (!status.isPresent()) {
             practitioner.ifPresent(pr -> {
                 if (!getCareTeamIdsFromPractitioner(pr).isEmpty()) {
                     finalConsentQueryWithCareTeam.where(new ReferenceClientParam("actor").hasAnyOfIds(getCareTeamIdsFromPractitioner(pr)));
@@ -120,19 +118,19 @@ public class ConsentServiceImpl implements ConsentService {
         // Disable caching to get latest data
         consentQueryWithCareTeam = FhirUtil.setNoCacheControlDirective(finalConsentQueryWithCareTeam);
 
-        Bundle consentBundleWithCareTeam= (Bundle) consentQueryWithCareTeam.returnBundle(Bundle.class).execute();
+        Bundle consentBundleWithCareTeam = (Bundle) consentQueryWithCareTeam.returnBundle(Bundle.class).execute();
 
-        List<Bundle.BundleEntryComponent> consentBundleEntryWithCareTeam = FhirUtil.getAllBundleComponentsAsList(consentBundleWithCareTeam,Optional.of(numberOfConsentsPerPage),fhirClient,configProperties);
+        List<Bundle.BundleEntryComponent> consentBundleEntryWithCareTeam = FhirUtil.getAllBundleComponentsAsList(consentBundleWithCareTeam, Optional.of(numberOfConsentsPerPage), fhirClient, configProperties);
 
         List<Bundle.BundleEntryComponent> bundleEntryComponentList = new ArrayList<>();
         if (!practitioner.isPresent()) {
             bundleEntryComponentList.addAll(consentBundleEntryWithCareTeam);
         }
         //Get consent according to the practitioner.
-        practitioner.ifPresent(pr->{
-            Bundle bundle= (Bundle) getConsentIQuery(patient,Optional.empty(),status,generalDesignation).returnBundle(Bundle.class).execute();
-            List<Bundle.BundleEntryComponent> consents=FhirUtil.getAllBundleComponentsAsList(bundle, Optional.ofNullable(numberOfConsentsPerPage),fhirClient,configProperties)
-                    .stream().filter(cs-> {
+        practitioner.ifPresent(pr -> {
+            Bundle bundle = (Bundle) getConsentIQuery(patient, Optional.empty(), status, generalDesignation).returnBundle(Bundle.class).execute();
+            List<Bundle.BundleEntryComponent> consents = FhirUtil.getAllBundleComponentsAsList(bundle, Optional.ofNullable(numberOfConsentsPerPage), fhirClient, configProperties)
+                    .stream().filter(cs -> {
                                 Consent consent = (Consent) cs.getResource();
                                 return !consent.getActor().stream()
                                         .filter(ac -> ac.getReference().getReference()
@@ -149,7 +147,7 @@ public class ConsentServiceImpl implements ConsentService {
         // Map to DTO
         List<DetailedConsentDto> consentDtosList = bundleEntryComponentList.stream().map(this::convertConsentBundleEntryToConsentDto).collect(toList());
 
-        return (PageDto<DetailedConsentDto>) PaginationUtil.applyPaginationForCustomArrayList(consentDtosList, numberOfConsentsPerPage,pageNumber, false);
+        return (PageDto<DetailedConsentDto>) PaginationUtil.applyPaginationForCustomArrayList(consentDtosList, numberOfConsentsPerPage, pageNumber, false);
 
     }
 
@@ -285,10 +283,10 @@ public class ConsentServiceImpl implements ConsentService {
         Consent consent = (Consent) fhirConsentDtoModel.getResource();
 
         //setting medical info type
-        if(consentDto.getMedicalInformation() != null){
-            int totalMedicalInfo = lookUpService.getSecurityLabel() != null?
+        if (consentDto.getMedicalInformation() != null) {
+            int totalMedicalInfo = lookUpService.getSecurityLabel() != null ?
                     lookUpService.getSecurityLabel().size() : 0;
-            if(consentDto.getMedicalInformation().size() < lookUpService.getSecurityLabel().size()){
+            if (consentDto.getMedicalInformation().size() < lookUpService.getSecurityLabel().size()) {
                 consentDto.setConsentMedicalInfoType(ConsentMedicalInfoType.SHARE_SPECIFIC);
             } else {
                 consentDto.setConsentMedicalInfoType(ConsentMedicalInfoType.SHARE_ALL);
@@ -302,7 +300,7 @@ public class ConsentServiceImpl implements ConsentService {
                 detailedConsentDto.setSourceAttachment(consent.getSourceAttachment().getData());
             } else if (consentDto.getStatus().equalsIgnoreCase("draft")) {
                 String patientID = consentDto.getPatient().getReference().replace("Patient/", "");
-                PatientDto patientDto = patientService.getPatientById(patientID,null);
+                PatientDto patientDto = patientService.getPatientById(patientID, null);
                 log.info("Generating consent PDF");
                 byte[] pdfBytes = consentPdfGenerator.generateConsentPdf(detailedConsentDto, patientDto, operatedByPatient, Optional.empty());
                 detailedConsentDto.setSourceAttachment(pdfBytes);
@@ -349,7 +347,7 @@ public class ConsentServiceImpl implements ConsentService {
     }
 
     @Override
-    public void attestConsent(String consentId, AttestConsentDto attestConsentDto) {
+    public void attestConsent(String consentId) {
 
         Consent consent = fhirClient.read().resource(Consent.class).withId(consentId.trim()).execute();
         consent.setStatus(Consent.ConsentState.ACTIVE);
@@ -358,12 +356,12 @@ public class ConsentServiceImpl implements ConsentService {
         detailedConsentDto.setStatus("Active");
 
         String patientID = detailedConsentDto.getPatient().getReference().replace("Patient/", "");
-        PatientDto patientDto = patientService.getPatientById(patientID,null);
+        PatientDto patientDto = patientService.getPatientById(patientID, null);
 
 
         try {
             log.info("Updating consent: Generating the attested PDF");
-            byte[] pdfBytes = consentPdfGenerator.generateConsentPdf(detailedConsentDto, patientDto, operatedByPatient, Optional.of(attestConsentDto.getSignatureDataURL()));
+            byte[] pdfBytes = consentPdfGenerator.generateConsentPdf(detailedConsentDto, patientDto, operatedByPatient, Optional.empty());
             consent.setSource(addAttachment(pdfBytes));
 
         } catch (IOException e) {
@@ -378,7 +376,7 @@ public class ConsentServiceImpl implements ConsentService {
     }
 
     @Override
-    public void revokeConsent(String consentId, RevokeConsentDto revokeConsentDto) {
+    public void revokeConsent(String consentId) {
 
         Consent consent = fhirClient.read().resource(Consent.class).withId(consentId.trim()).execute();
         consent.setStatus(Consent.ConsentState.INACTIVE);
@@ -387,11 +385,11 @@ public class ConsentServiceImpl implements ConsentService {
         detailedConsentDto.setStatus("Inactive");
 
         String patientID = detailedConsentDto.getPatient().getReference().replace("Patient/", "");
-        PatientDto patientDto = patientService.getPatientById(patientID,null);
+        PatientDto patientDto = patientService.getPatientById(patientID, null);
 
         try {
             log.info("Updating consent: Generating the revocation PDF");
-            byte[] pdfBytes = consentRevocationPdfGenerator.generateConsentRevocationPdf(detailedConsentDto, patientDto, operatedByPatient, revokeConsentDto.getSignatureDataURL());
+            byte[] pdfBytes = consentRevocationPdfGenerator.generateConsentRevocationPdf(detailedConsentDto, patientDto, operatedByPatient, Optional.empty());
             consent.setSource(addAttachment(pdfBytes));
 
         } catch (IOException e) {
@@ -551,7 +549,7 @@ public class ConsentServiceImpl implements ConsentService {
         if (consentDto.isGeneralDesignation()) {
             // share all
             exceptComponent.setSecurityLabel(getIncludeCodingList(lookUpService.getSecurityLabel()));
-         } else {
+        } else {
             // share the one user selects
             exceptComponent.setSecurityLabel(getIncludeCodingList(consentDto.getMedicalInformation()));
         }

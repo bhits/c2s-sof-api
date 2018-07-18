@@ -6,7 +6,6 @@ import gov.samhsa.c2s.c2ssofapi.service.dto.AddressDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.DetailedConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.PatientDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.ReferenceDto;
-import gov.samhsa.c2s.c2ssofapi.service.exception.NoDataFoundException;
 import gov.samhsa.c2s.c2ssofapi.service.exception.NoEmailFoundException;
 import gov.samhsa.c2s.c2ssofapi.service.exception.PdfConfigMissingException;
 import lombok.extern.slf4j.Slf4j;
@@ -89,9 +88,7 @@ public class ConsentPdfGeneratorWithHexPdfImpl implements ConsentPdfGenerator {
             addConsentSigningDetails(document, patientDto, operatedByPatient);
         }
 
-        if (signatureDataUrl.isPresent()) {
-            drawSignature(document, signatureDataUrl.get());
-        }
+        signatureDataUrl.ifPresent(s -> drawSignature(document, s));
 
         // Get the document
         return document.getDocumentAsBytArray();

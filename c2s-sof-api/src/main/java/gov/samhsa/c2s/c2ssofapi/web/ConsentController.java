@@ -2,13 +2,11 @@ package gov.samhsa.c2s.c2ssofapi.web;
 
 import gov.samhsa.c2s.c2ssofapi.service.ConsentService;
 import gov.samhsa.c2s.c2ssofapi.service.dto.AbstractCareTeamDto;
-import gov.samhsa.c2s.c2ssofapi.service.dto.AttestConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.ConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.DetailedConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.GeneralConsentRelatedFieldDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.PageDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.PdfDto;
-import gov.samhsa.c2s.c2ssofapi.service.dto.RevokeConsentDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -54,14 +52,14 @@ public class ConsentController {
 
     @PutMapping("/consents/{consentId}/attestation")
     @ResponseStatus(HttpStatus.OK)
-    public void attestConsent(@PathVariable String consentId, @Valid @RequestBody AttestConsentDto attestConsentDto) {
-        consentService.attestConsent(consentId, attestConsentDto);
+    public void attestConsent(@PathVariable String consentId) {
+        consentService.attestConsent(consentId);
     }
 
     @PutMapping("/consents/{consentId}/revocation")
     @ResponseStatus(HttpStatus.OK)
-    public void revokeConsent(@PathVariable String consentId, @Valid @RequestBody RevokeConsentDto revokeConsentDto) {
-        consentService.revokeConsent(consentId, revokeConsentDto);
+    public void revokeConsent(@PathVariable String consentId) {
+        consentService.revokeConsent(consentId);
     }
 
     @PostMapping("/consents")
