@@ -1,17 +1,15 @@
 package gov.samhsa.c2s.c2ssofapi.service;
 
-import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.IQuery;
+import ca.uhn.fhir.rest.gclient.ReferenceClientParam;
 import ca.uhn.fhir.rest.gclient.TokenClientParam;
-import ca.uhn.fhir.rest.server.exceptions.BaseServerResponseException;
-import ca.uhn.fhir.validation.FhirValidator;
 import gov.samhsa.c2s.c2ssofapi.config.ConfigProperties;
 import gov.samhsa.c2s.c2ssofapi.service.dto.OrganizationDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.PageDto;
-import gov.samhsa.c2s.c2ssofapi.service.exception.FHIRClientException;
+import gov.samhsa.c2s.c2ssofapi.service.dto.ReferenceDto;
 import gov.samhsa.c2s.c2ssofapi.service.exception.OrganizationNotFoundException;
-import gov.samhsa.c2s.c2ssofapi.service.exception.ResourceNotFoundException;
+import gov.samhsa.c2s.c2ssofapi.service.util.FhirDtoUtil;
 import gov.samhsa.c2s.c2ssofapi.service.util.FhirUtil;
 import gov.samhsa.c2s.c2ssofapi.service.util.PaginationUtil;
 import gov.samhsa.c2s.c2ssofapi.service.util.RichStringClientParam;
@@ -19,6 +17,7 @@ import gov.samhsa.c2s.c2ssofapi.web.OrganizationController;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Organization;
+import org.hl7.fhir.dstu3.model.PractitionerRole;
 import org.hl7.fhir.dstu3.model.ResourceType;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,21 +34,15 @@ import static java.util.stream.Collectors.toList;
 @Slf4j
 public class OrganizationServiceImpl implements OrganizationService {
 
-
     private final ModelMapper modelMapper;
     private final IGenericClient fhirClient;
-    private final FhirValidator fhirValidator;
     private final ConfigProperties configProperties;
 
-    private final LookUpService lookUpService;
-
     @Autowired
-    public OrganizationServiceImpl(ModelMapper modelMapper, IGenericClient fhirClient, FhirValidator fhirValidator, ConfigProperties configProperties, LookUpService lookUpService) {
+    public OrganizationServiceImpl(ModelMapper modelMapper, IGenericClient fhirClient, ConfigProperties configProperties) {
         this.modelMapper = modelMapper;
         this.fhirClient = fhirClient;
-        this.fhirValidator = fhirValidator;
         this.configProperties = configProperties;
-        this.lookUpService = lookUpService;
     }
 
     @Override
@@ -175,48 +168,27 @@ public class OrganizationServiceImpl implements OrganizationService {
         return new PageDto<>(organizationsList, numberOfOrganizationsPerPage, totalPages, currentPage, organizationsList.size(), otherPageOrganizationSearchBundle.getTotal());
     }
 
-    private int getOrganizationsCountByIdentifier(String system, String code) {
-        log.info("Searching organizations with identifier.system : " + system + " and code : " + code);
-
-        Bundle searchBundle = fhirClient.search().forResource(Organization.class).where(new TokenClientParam("identifier").exactly().systemAndCode(system, code))
+    @Override
+    public List<ReferenceDto> getOrganizationsByPractitionerId(String practitionerId) {
+        List<ReferenceDto> organizations = new ArrayList<>();
+        Bundle bundle = fhirClient.search().forResource(PractitionerRole.class)
+                .where(new ReferenceClientParam("practitioner").hasId(ResourceType.Practitioner + "/" + practitionerId))
+                .include(PractitionerRole.INCLUDE_ORGANIZATION)
+                .sort().descending(PARAM_LASTUPDATED)
                 .returnBundle(Bundle.class).execute();
-        if (searchBundle.getTotal() == 0) {
-            Bundle organizationBundle = fhirClient.search().forResource(Organization.class).returnBundle(Bundle.class).execute();
-            return FhirUtil.getAllBundleComponentsAsList(organizationBundle, Optional.empty(), fhirClient, configProperties).stream().filter(organization -> {
-                Organization o = (Organization) organization.getResource();
-                return o.getIdentifier().stream().anyMatch(identifier ->
-                        (identifier.getSystem().equalsIgnoreCase(system) &&
-                                identifier.getValue().replaceAll(" ", "")
-                                        .replaceAll("-", "").trim()
-                                        .equalsIgnoreCase(code.replaceAll(" ", "").replaceAll("-", "").trim()))
-                );
-            }).collect(toList()).size();
-        } else {
-            return searchBundle.getTotal();
+        if (bundle != null) {
+            List<Bundle.BundleEntryComponent> organizationComponents = FhirUtil.getAllBundleComponentsAsList(bundle, Optional.empty(), fhirClient, configProperties);
+            if (organizationComponents != null) {
+                organizations = organizationComponents.stream()
+                        .filter(it -> it.getResource().getResourceType().equals(ResourceType.PractitionerRole))
+                        .map(it -> (PractitionerRole) it.getResource())
+                        .map(it -> (Organization) it.getOrganization().getResource())
+                        .map(FhirDtoUtil::mapOrganizationToReferenceDto)
+                        .distinct()
+                        .collect(toList());
+            }
         }
-    }
-
-    private Organization readOrganizationFromServer(String organizationId) {
-        Organization existingFhirOrganization;
-
-        try {
-            existingFhirOrganization = fhirClient.read().resource(Organization.class).withId(organizationId.trim()).execute();
-        } catch (BaseServerResponseException e) {
-            log.error("FHIR Client returned with an error while reading the organization with ID: " + organizationId);
-            throw new ResourceNotFoundException("FHIR Client returned with an error while reading the organization:" + e.getMessage());
-        }
-        return existingFhirOrganization;
-    }
-
-    private void setOrganizationStatusToInactive(Organization existingFhirOrganization) {
-        existingFhirOrganization.setActive(false);
-        try {
-            MethodOutcome serverResponse = fhirClient.update().resource(existingFhirOrganization).execute();
-            log.info("Inactivated the organization :" + serverResponse.getId().getIdPart());
-        } catch (BaseServerResponseException e) {
-            log.error("Could NOT inactivate organization");
-            throw new FHIRClientException("FHIR Client returned with an error while inactivating the organization:" + e.getMessage());
-        }
+        return organizations;
     }
 
     private List<OrganizationDto> convertAllBundleToSingleOrganizationDtoList(Bundle firstPageOrganizationSearchBundle, int numberOBundlePerPage) {
@@ -229,5 +201,4 @@ public class OrganizationServiceImpl implements OrganizationService {
                 })
                 .collect(toList());
     }
-
 }
