@@ -7,9 +7,7 @@ import ca.uhn.fhir.rest.gclient.TokenClientParam;
 import gov.samhsa.c2s.c2ssofapi.config.ConfigProperties;
 import gov.samhsa.c2s.c2ssofapi.service.dto.OrganizationDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.PageDto;
-import gov.samhsa.c2s.c2ssofapi.service.dto.ReferenceDto;
 import gov.samhsa.c2s.c2ssofapi.service.exception.OrganizationNotFoundException;
-import gov.samhsa.c2s.c2ssofapi.service.util.FhirDtoUtil;
 import gov.samhsa.c2s.c2ssofapi.service.util.FhirUtil;
 import gov.samhsa.c2s.c2ssofapi.service.util.PaginationUtil;
 import gov.samhsa.c2s.c2ssofapi.service.util.RichStringClientParam;
@@ -169,24 +167,26 @@ public class OrganizationServiceImpl implements OrganizationService {
     }
 
     @Override
-    public List<ReferenceDto> getOrganizationsByPractitionerId(String practitionerId) {
-        List<ReferenceDto> organizations = new ArrayList<>();
+    public List<OrganizationDto> getOrganizationsByPractitionerId(String practitionerId) {
+        List<OrganizationDto> organizations = new ArrayList<>();
         Bundle bundle = fhirClient.search().forResource(PractitionerRole.class)
                 .where(new ReferenceClientParam("practitioner").hasId(ResourceType.Practitioner + "/" + practitionerId))
                 .include(PractitionerRole.INCLUDE_ORGANIZATION)
                 .sort().descending(PARAM_LASTUPDATED)
                 .returnBundle(Bundle.class).execute();
         if (bundle != null) {
-            List<Bundle.BundleEntryComponent> organizationComponents = FhirUtil.getAllBundleComponentsAsList(bundle, Optional.empty(), fhirClient, configProperties);
-            if (organizationComponents != null) {
-                organizations = organizationComponents.stream()
-                        .filter(it -> it.getResource().getResourceType().equals(ResourceType.PractitionerRole))
-                        .map(it -> (PractitionerRole) it.getResource())
-                        .map(it -> (Organization) it.getOrganization().getResource())
-                        .map(FhirDtoUtil::mapOrganizationToReferenceDto)
-                        .distinct()
-                        .collect(toList());
-            }
+            organizations = FhirUtil.getAllBundleComponentsAsList(bundle, Optional.empty(), fhirClient, configProperties)
+                    .stream()
+                    .filter(it -> it.getResource().getResourceType().equals(ResourceType.PractitionerRole))
+                    .map(it -> (PractitionerRole) it.getResource())
+                    .map(it -> (Organization) it.getOrganization().getResource())
+                    .map(organization -> {
+                        OrganizationDto organizationDto = modelMapper.map(organization, OrganizationDto.class);
+                        organizationDto.setLogicalId(organization.getIdElement().getIdPart());
+                        return organizationDto;
+                    })
+                    .distinct()
+                    .collect(toList());
         }
         return organizations;
     }

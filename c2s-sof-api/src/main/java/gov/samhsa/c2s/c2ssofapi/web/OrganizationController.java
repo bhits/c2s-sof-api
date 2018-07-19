@@ -3,7 +3,6 @@ package gov.samhsa.c2s.c2ssofapi.web;
 import gov.samhsa.c2s.c2ssofapi.service.OrganizationService;
 import gov.samhsa.c2s.c2ssofapi.service.dto.OrganizationDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.PageDto;
-import gov.samhsa.c2s.c2ssofapi.service.dto.ReferenceDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -41,7 +40,7 @@ public class OrganizationController {
     }
 
     @GetMapping
-    public List<ReferenceDto> getOrganizationsByPractitionerId(@RequestParam(value = "practitionerId") String practitionerId) {
+    public List<OrganizationDto> getOrganizationsByPractitionerId(@RequestParam(value = "practitionerId") String practitionerId) {
         return organizationService.getOrganizationsByPractitionerId(practitionerId);
     }
 }
