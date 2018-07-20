@@ -38,6 +38,7 @@ import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.Organization;
 import org.hl7.fhir.dstu3.model.Period;
 import org.hl7.fhir.dstu3.model.ResourceType;
+import org.hl7.fhir.dstu3.model.codesystems.ConsentStatus;
 import org.hl7.fhir.dstu3.model.codesystems.V3ActReason;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.modelmapper.ModelMapper;
@@ -145,7 +146,9 @@ public class ConsentServiceImpl implements ConsentService {
 
 
         // Map to DTO
-        List<DetailedConsentDto> consentDtosList = bundleEntryComponentList.stream().map(this::convertConsentBundleEntryToConsentDto).collect(toList());
+        List<DetailedConsentDto> consentDtosList = bundleEntryComponentList.stream().map(this::convertConsentBundleEntryToConsentDto).filter(
+                consent-> !consent.getStatus().equalsIgnoreCase(ConsentStatus.ENTEREDINERROR.toString())
+        ).collect(toList());
 
         return (PageDto<DetailedConsentDto>) PaginationUtil.applyPaginationForCustomArrayList(consentDtosList, numberOfConsentsPerPage, pageNumber, false);
 
