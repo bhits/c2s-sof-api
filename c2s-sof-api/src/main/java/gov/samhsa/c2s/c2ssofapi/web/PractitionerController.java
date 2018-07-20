@@ -15,14 +15,8 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/practitioners")
 public class PractitionerController {
-    public enum SearchType {
-        identifier, name
-    }
-
     @Autowired
     private PractitionerService practitionerService;
-
-
 
     @GetMapping("/{practitionerId}")
     public PractitionerDto getPractitioner(@PathVariable String practitionerId) {
@@ -31,14 +25,15 @@ public class PractitionerController {
 
     @GetMapping("/search")
     public PageDto<PractitionerDto> searchPractitioners(@RequestParam Optional<SearchType> searchType, @RequestParam Optional<String> searchValue, Optional<String> organization, @RequestParam Optional<Boolean> showInactive, @RequestParam Optional<Integer> page, @RequestParam Optional<Integer> size, Optional<Boolean> showAll) {
-        return practitionerService.searchPractitioners(searchType, searchValue, organization, showInactive, page, size,showAll);
+        return practitionerService.searchPractitioners(searchType, searchValue, organization, showInactive, page, size, showAll);
     }
-
 
     @GetMapping
-    public PageDto<PractitionerDto> getPractitionersByOrganizationAndRole(@RequestParam String organization, @RequestParam Optional<String> role,@RequestParam Optional<Integer> page, @RequestParam Optional<Integer> size) {
-        return practitionerService.getPractitionersByOrganizationAndRole(organization, role, page, size);
+    public PageDto<PractitionerDto> getPractitioners(@RequestParam Optional<Integer> page, @RequestParam Optional<Integer> size) {
+        return practitionerService.getPractitioners(page, size);
     }
 
-
+    public enum SearchType {
+        identifier, name
+    }
 }

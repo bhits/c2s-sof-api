@@ -5,7 +5,7 @@ c2s-sof-ui-config:
   client-id: c2s_sof_app
   launch-uri: http://localhost:9000/c2s-sof-ui/launch
   redirect-uri: http://localhost:9000/c2s-sof-ui
-  scope: patient/Patient.read patient/Consent.* launch launch/organization launch/patient openid profile user/Organization.read user/Practitioner.read user/PractitionerRole.read
+  scope: patient/Patient.read patient/Consent.* launch launch/patient openid profile user/Organization.read user/Practitioner.read user/PractitionerRole.read patient/CareTeam.read user/ValueSet.read $expand
 c2s-sof-api:
   fhir:
     clientSocketTimeoutInMs: 768000
