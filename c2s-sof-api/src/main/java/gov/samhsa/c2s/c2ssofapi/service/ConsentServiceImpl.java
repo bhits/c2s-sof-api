@@ -285,7 +285,11 @@ public class ConsentServiceImpl implements ConsentService {
     private DetailedConsentDto convertConsentBundleEntryToConsentDto(Bundle.BundleEntryComponent fhirConsentDtoModel) {
         ConsentDto consentDto = modelMapper.map(fhirConsentDtoModel.getResource(), ConsentDto.class);
 
-        consentDto.getFromActor().stream().filter(member -> member.getDisplay().equalsIgnoreCase("Omnibus Care Plan (SAMHSA)")).map(member -> true).forEach(consentDto::setGeneralDesignation);
+        if(consentDto.getFromActor().isEmpty()){
+            consentDto.setGeneralDesignation(true);
+        }else{
+            consentDto.setGeneralDesignation(false);
+        }
 
         Consent consent = (Consent) fhirConsentDtoModel.getResource();
 
