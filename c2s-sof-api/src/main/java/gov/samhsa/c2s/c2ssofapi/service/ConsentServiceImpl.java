@@ -140,6 +140,10 @@ public class ConsentServiceImpl implements ConsentService {
                             }
                     ).collect(toList());
             bundleEntryComponentList.addAll(consents);
+
+
+            Bundle bundleForGeneralDesignation= (Bundle) getConsentIQuery(patient,Optional.ofNullable(pr),status,generalDesignation).returnBundle(Bundle.class).execute();
+            bundleEntryComponentList.addAll(FhirUtil.getAllBundleComponentsAsList(bundleForGeneralDesignation,Optional.ofNullable(numberOfConsentsPerPage),fhirClient, configProperties));
         });
 
         bundleEntryComponentList.stream().distinct().collect(toList());
