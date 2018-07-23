@@ -285,11 +285,7 @@ public class ConsentServiceImpl implements ConsentService {
     private DetailedConsentDto convertConsentBundleEntryToConsentDto(Bundle.BundleEntryComponent fhirConsentDtoModel) {
         ConsentDto consentDto = modelMapper.map(fhirConsentDtoModel.getResource(), ConsentDto.class);
 
-        if(consentDto.getFromActor().isEmpty()){
-            consentDto.setGeneralDesignation(true);
-        }else{
-            consentDto.setGeneralDesignation(false);
-        }
+        consentDto.getFromActor().stream().filter(member -> member.getDisplay().trim().equalsIgnoreCase(PSEUDO_ORGANIZATION_NAME.trim())).map(member -> true).forEach(consentDto::setGeneralDesignation);
 
         Consent consent = (Consent) fhirConsentDtoModel.getResource();
 
@@ -604,10 +600,10 @@ public class ConsentServiceImpl implements ConsentService {
                 Consent consent = (Consent) consentBundleEntry.getResource();
                 List<String> fromActor = getReferenceOfCareTeam(consent, INFORMANT_CODE);
 
-                String pseudoOrgRef = getPseudoOrganization().getEntry().stream().findFirst().map(pseudoOrg -> {
+                Optional<String> pseudoOrgRef = getPseudoOrganization().getEntry().stream().findFirst().map(pseudoOrg -> {
                     Organization organization = (Organization) pseudoOrg.getResource();
                     return organization.getIdElement().getIdPart();
-                }).get();
+                });
                 if ((fromActor.size() == 1)) {
                     if (fromActor.stream().findFirst().get().equalsIgnoreCase("Organization/" + pseudoOrgRef)) {
                         return consentId.map(s -> !(s.equalsIgnoreCase(consent.getIdElement().getIdPart()))).orElse(true);
@@ -634,7 +630,6 @@ public class ConsentServiceImpl implements ConsentService {
     private Bundle getPseudoOrganization() {
         return fhirClient.search().forResource(Organization.class)
                 .where(new TokenClientParam("identifier").exactly().code(PSEUDO_ORGANIZATION_TAX_ID))
-                .where(new StringClientParam("name").matches().value(PSEUDO_ORGANIZATION_NAME))
                 .returnBundle(Bundle.class)
                 .execute();
     }
