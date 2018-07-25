@@ -38,6 +38,7 @@ import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.Organization;
 import org.hl7.fhir.dstu3.model.Period;
 import org.hl7.fhir.dstu3.model.ResourceType;
+import org.hl7.fhir.dstu3.model.codesystems.ConsentStatus;
 import org.hl7.fhir.dstu3.model.codesystems.V3ActReason;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.modelmapper.ModelMapper;
@@ -139,13 +140,19 @@ public class ConsentServiceImpl implements ConsentService {
                             }
                     ).collect(toList());
             bundleEntryComponentList.addAll(consents);
+
+
+            Bundle bundleForGeneralDesignation= (Bundle) getConsentIQuery(patient,Optional.ofNullable(pr),status,generalDesignation).returnBundle(Bundle.class).execute();
+            bundleEntryComponentList.addAll(FhirUtil.getAllBundleComponentsAsList(bundleForGeneralDesignation,Optional.ofNullable(numberOfConsentsPerPage),fhirClient, configProperties));
         });
 
         bundleEntryComponentList.stream().distinct().collect(toList());
 
 
         // Map to DTO
-        List<DetailedConsentDto> consentDtosList = bundleEntryComponentList.stream().map(this::convertConsentBundleEntryToConsentDto).collect(toList());
+        List<DetailedConsentDto> consentDtosList = bundleEntryComponentList.stream().map(this::convertConsentBundleEntryToConsentDto).filter(
+                consent-> !consent.getStatus().equalsIgnoreCase(ConsentStatus.ENTEREDINERROR.toString())
+        ).collect(toList());
 
         return (PageDto<DetailedConsentDto>) PaginationUtil.applyPaginationForCustomArrayList(consentDtosList, numberOfConsentsPerPage, pageNumber, false);
 
@@ -278,7 +285,7 @@ public class ConsentServiceImpl implements ConsentService {
     private DetailedConsentDto convertConsentBundleEntryToConsentDto(Bundle.BundleEntryComponent fhirConsentDtoModel) {
         ConsentDto consentDto = modelMapper.map(fhirConsentDtoModel.getResource(), ConsentDto.class);
 
-        consentDto.getFromActor().stream().filter(member -> member.getDisplay().equalsIgnoreCase("Omnibus Care Plan (SAMHSA)")).map(member -> true).forEach(consentDto::setGeneralDesignation);
+        consentDto.getFromActor().stream().filter(member -> member.getDisplay().trim().equalsIgnoreCase(PSEUDO_ORGANIZATION_NAME.trim())).map(member -> true).forEach(consentDto::setGeneralDesignation);
 
         Consent consent = (Consent) fhirConsentDtoModel.getResource();
 
@@ -593,10 +600,10 @@ public class ConsentServiceImpl implements ConsentService {
                 Consent consent = (Consent) consentBundleEntry.getResource();
                 List<String> fromActor = getReferenceOfCareTeam(consent, INFORMANT_CODE);
 
-                String pseudoOrgRef = getPseudoOrganization().getEntry().stream().findFirst().map(pseudoOrg -> {
+                Optional<String> pseudoOrgRef = getPseudoOrganization().getEntry().stream().findFirst().map(pseudoOrg -> {
                     Organization organization = (Organization) pseudoOrg.getResource();
                     return organization.getIdElement().getIdPart();
-                }).get();
+                });
                 if ((fromActor.size() == 1)) {
                     if (fromActor.stream().findFirst().get().equalsIgnoreCase("Organization/" + pseudoOrgRef)) {
                         return consentId.map(s -> !(s.equalsIgnoreCase(consent.getIdElement().getIdPart()))).orElse(true);
@@ -623,7 +630,6 @@ public class ConsentServiceImpl implements ConsentService {
     private Bundle getPseudoOrganization() {
         return fhirClient.search().forResource(Organization.class)
                 .where(new TokenClientParam("identifier").exactly().code(PSEUDO_ORGANIZATION_TAX_ID))
-                .where(new StringClientParam("name").matches().value(PSEUDO_ORGANIZATION_NAME))
                 .returnBundle(Bundle.class)
                 .execute();
     }
