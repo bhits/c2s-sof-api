@@ -1,5 +1,5 @@
 server:
-  port: 8450
+  port: 8451
 c2s-sof-ui-config:
   grant-type: authorization_code
   client-id: c2s_sof_app
