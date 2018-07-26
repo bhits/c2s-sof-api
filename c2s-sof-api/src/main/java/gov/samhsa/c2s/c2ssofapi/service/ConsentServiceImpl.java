@@ -240,6 +240,9 @@ public class ConsentServiceImpl implements ConsentService {
             }
         } else {
             Consent consent = consentDtoToConsent(Optional.empty(), consentDto);
+            // Set UUID
+            consent.setPolicyRule(UUID.randomUUID().toString());
+
             //Set Profile Meta Data
             FhirProfileUtil.setConsentProfileMetaData(fhirClient, consent);
 
