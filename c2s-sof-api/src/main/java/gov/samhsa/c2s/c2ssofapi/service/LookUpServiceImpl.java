@@ -1,7 +1,6 @@
 package gov.samhsa.c2s.c2ssofapi.service;
 
 import ca.uhn.fhir.rest.client.api.IGenericClient;
-import gov.samhsa.c2s.c2ssofapi.config.ConfigProperties;
 import gov.samhsa.c2s.c2ssofapi.service.dto.LookupPathUrls;
 import gov.samhsa.c2s.c2ssofapi.service.dto.ValueSetDto;
 import gov.samhsa.c2s.c2ssofapi.service.exception.ResourceNotFoundException;
@@ -21,18 +20,15 @@ public class LookUpServiceImpl implements LookUpService {
 
     private final IGenericClient fhirClient;
 
-    private final ConfigProperties configProperties;
-
-    public LookUpServiceImpl(IGenericClient fhirClient, ConfigProperties configProperties) {
+    public LookUpServiceImpl(IGenericClient fhirClient) {
         this.fhirClient = fhirClient;
-        this.configProperties = configProperties;
     }
 
     @Override
     public List<ValueSetDto> getConsentStateCodes() {
-        List<ValueSetDto> consentStateCodeList = new ArrayList<>();
         return getValueSetsByValueSetExpansion(LookupPathUrls.CONSENT_STATE_CODE.getUrlPath(), LookupPathUrls.CONSENT_STATE_CODE.getType());
     }
+
     @Override
     public List<ValueSetDto> getPurposeOfUse() {
         return getValueSetsByValueSetCompose(LookupPathUrls.PURPOSE_OF_USE.getUrlPath(), LookupPathUrls.PURPOSE_OF_USE.getType());
@@ -96,7 +92,6 @@ public class LookUpServiceImpl implements LookUpService {
         log.info("Found " + consentActionList.size() + " consent Action.");
         return consentActionList;
     }
-
 
 
 }
