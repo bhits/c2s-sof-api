@@ -7,6 +7,7 @@ import ca.uhn.fhir.rest.gclient.IQuery;
 import ca.uhn.fhir.rest.gclient.TokenClientParam;
 import ca.uhn.fhir.rest.server.exceptions.BaseServerResponseException;
 import ca.uhn.fhir.validation.FhirValidator;
+import ca.uhn.fhir.validation.SingleValidationMessage;
 import ca.uhn.fhir.validation.ValidationResult;
 import gov.samhsa.c2s.c2ssofapi.config.ConfigProperties;
 import gov.samhsa.c2s.c2ssofapi.domain.StructureDefinitionEnum;
@@ -44,6 +45,12 @@ public class FhirOperationUtil {
         }
 
         if (!validationResult.isSuccessful()) {
+            log.info("Listing the issues found when validating the " + fhirResourceName + "(" + actionAndResourceName + ") :");
+            fhirResourceId.ifPresent(s -> log.info("FHIR Resource ID: " + s));
+            // Show the issues
+            for (SingleValidationMessage next : validationResult.getMessages()) {
+                log.error("Next issue (" + next.getSeverity() + ") - " + next.getLocationString() + " - " + next.getMessage());
+            }
             throw new FHIRFormatErrorException(fhirResourceName + " validation was not successful" + validationResult.getMessages());
         }
     }
