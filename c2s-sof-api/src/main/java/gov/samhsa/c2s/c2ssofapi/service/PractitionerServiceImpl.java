@@ -54,7 +54,6 @@ public class PractitionerServiceImpl implements PractitionerService {
             throw new ResourceNotFoundException("No practitioner was found for the givecn practitionerID:" + practitionerId);
         }
 
-        List<Bundle.BundleEntryComponent> retrievedPractitioners = practitionerBundle.getEntry();
         Bundle.BundleEntryComponent retrievedPractitioner = practitionerBundle.getEntry().get(0);
 
         PractitionerDto practitionerDto = modelMapper.map(retrievedPractitioner.getResource(), PractitionerDto.class);
