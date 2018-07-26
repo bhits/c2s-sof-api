@@ -67,6 +67,7 @@ public class ConsentServiceImpl implements ConsentService {
     private static final String PSEUDO_ORGANIZATION_TAX_ID = "530196960";
     private static final String CONTENTTYPE = "application/pdf";
     private static final Boolean operatedByPatient = true;
+    private final String PURPOSE_OF_USE_CODING_SYSTEM = "http://hl7.org/fhir/ValueSet/v3-PurposeOfUse";
 
 
     private final IGenericClient fhirClient;
@@ -486,7 +487,7 @@ public class ConsentServiceImpl implements ConsentService {
                 Coding coding = new Coding();
                 coding.setDisplay((purpose.getDisplay() != null && !purpose.getDisplay().isEmpty()) ? purpose.getDisplay() : null)
                         .setCode((purpose.getCode() != null && !purpose.getCode().isEmpty()) ? purpose.getCode() : null)
-                        .setSystem((purpose.getSystem() != null && !purpose.getSystem().isEmpty()) ? purpose.getSystem() : null);
+                        .setSystem((purpose.getSystem() != null && !purpose.getSystem().isEmpty()) ? purpose.getSystem() : PURPOSE_OF_USE_CODING_SYSTEM);
                 return coding;
             }).collect(toList());
 
