@@ -30,8 +30,7 @@ import static ca.uhn.fhir.rest.api.Constants.PARAM_LASTUPDATED;
 @Slf4j
 public class FhirOperationUtil {
 
-    public static final int PAGE_NUMBER = 2;
-
+    private static final int PAGE_NUMBER = 2;
 
     public static void validateFhirResource(FhirValidator fhirValidator, DomainResource fhirResource,
                                             Optional<String> fhirResourceId, String fhirResourceName,
@@ -123,97 +122,13 @@ public class FhirOperationUtil {
         Bundle structureDefinitionBundle = null;
 
         switch (resource.toUpperCase()) {
-            case "APPOINTMENT":
-                structureDefinitionBundle = fhirClient.search().forResource(StructureDefinition.class)
-                        .where(new TokenClientParam("type").exactly().code("Appointment"))
-                        .returnBundle(Bundle.class)
-                        .execute();
-                break;
-            case "CARETEAM":
-                structureDefinitionBundle = fhirClient.search().forResource(StructureDefinition.class)
-                        .where(new TokenClientParam("type").exactly().code("CareTeam"))
-                        .returnBundle(Bundle.class)
-                        .execute();
-                break;
-            case "COMMUNICATION":
-                structureDefinitionBundle = fhirClient.search().forResource(StructureDefinition.class)
-                        .where(new TokenClientParam("type").exactly().code("Communication"))
-                        .returnBundle(Bundle.class)
-                        .execute();
-                break;
             case "CONSENT":
                 structureDefinitionBundle = fhirClient.search().forResource(StructureDefinition.class)
                         .where(new TokenClientParam("type").exactly().code("Consent"))
                         .returnBundle(Bundle.class)
                         .execute();
                 break;
-            case "COVERAGE":
-                structureDefinitionBundle = fhirClient.search().forResource(StructureDefinition.class)
-                        .where(new TokenClientParam("type").exactly().code("Coverage"))
-                        .returnBundle(Bundle.class)
-                        .execute();
-                break;
-            case "EPISODEOFCARE":
-                structureDefinitionBundle = fhirClient.search().forResource(StructureDefinition.class)
-                        .where(new TokenClientParam("type").exactly().code("EpisodeOfCare"))
-                        .returnBundle(Bundle.class)
-                        .execute();
-                break;
-            case "FLAG":
-                structureDefinitionBundle = fhirClient.search().forResource(StructureDefinition.class)
-                        .where(new TokenClientParam("type").exactly().code("Flag"))
-                        .returnBundle(Bundle.class)
-                        .execute();
-                break;
-            case "HEALTHCARESERVICE":
-                structureDefinitionBundle = fhirClient.search().forResource(StructureDefinition.class)
-                        .where(new TokenClientParam("type").exactly().code("HealthcareService"))
-                        .returnBundle(Bundle.class)
-                        .execute();
-                break;
-            case "LOCATION":
-                structureDefinitionBundle = fhirClient.search().forResource(StructureDefinition.class)
-                        .where(new TokenClientParam("type").exactly().code("Location"))
-                        .returnBundle(Bundle.class)
-                        .execute();
-                break;
-            case "ORGANIZATION":
-                structureDefinitionBundle = fhirClient.search().forResource(StructureDefinition.class)
-                        .where(new TokenClientParam("type").exactly().code("Organization"))
-                        .returnBundle(Bundle.class)
-                        .execute();
-                break;
-            case "PATIENT":
-                structureDefinitionBundle = fhirClient.search().forResource(StructureDefinition.class)
-                        .where(new TokenClientParam("type").exactly().code("Patient"))
-                        .returnBundle(Bundle.class)
-                        .execute();
-                break;
-            case "PRACTITIONER":
-                structureDefinitionBundle = fhirClient.search().forResource(StructureDefinition.class)
-                        .where(new TokenClientParam("type").exactly().code("Practitioner"))
-                        .returnBundle(Bundle.class)
-                        .execute();
-                break;
-            case "PRACTITIONERROLE":
-                structureDefinitionBundle = fhirClient.search().forResource(StructureDefinition.class)
-                        .where(new TokenClientParam("type").exactly().code("PractitionerRole"))
-                        .returnBundle(Bundle.class)
-                        .execute();
-                break;
-            case "RELATEDPERSON":
-                structureDefinitionBundle = fhirClient.search().forResource(StructureDefinition.class)
-                        .where(new TokenClientParam("type").exactly().code("RelatedPerson"))
-                        .returnBundle(Bundle.class)
-                        .execute();
-                break;
-            case "TASK":
-                structureDefinitionBundle = fhirClient.search().forResource(StructureDefinition.class)
-                        .where(new TokenClientParam("type").exactly().code("Task"))
-                        .returnBundle(Bundle.class)
-                        .execute();
-                break;
-            default:
+             default:
 
         }
 
