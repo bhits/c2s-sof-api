@@ -25,6 +25,7 @@ import gov.samhsa.c2s.c2ssofapi.service.pdf.ConsentPdfGenerator;
 import gov.samhsa.c2s.c2ssofapi.service.pdf.ConsentRevocationPdfGenerator;
 import gov.samhsa.c2s.c2ssofapi.service.util.FhirDtoUtil;
 import gov.samhsa.c2s.c2ssofapi.service.util.FhirOperationUtil;
+import gov.samhsa.c2s.c2ssofapi.service.util.FhirProfileUtil;
 import gov.samhsa.c2s.c2ssofapi.service.util.FhirResourceUtil;
 import gov.samhsa.c2s.c2ssofapi.service.util.PaginationUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -239,10 +240,14 @@ public class ConsentServiceImpl implements ConsentService {
             }
         } else {
             Consent consent = consentDtoToConsent(Optional.empty(), consentDto);
+            //Set Profile Meta Data
+            FhirProfileUtil.setConsentProfileMetaData(fhirClient, consent);
+
             //Validate
             FhirOperationUtil.validateFhirResource(fhirValidator, consent, Optional.empty(), ResourceType.Consent.name(), "Create Consent");
 
-            fhirClient.create().resource(consent).execute();
+            //Create
+            FhirOperationUtil.createFhirResource(fhirClient, consent, ResourceType.Consent.name());
         }
     }
 
@@ -253,10 +258,14 @@ public class ConsentServiceImpl implements ConsentService {
             Consent consent = consentDtoToConsent(Optional.of(consentId), consentDto);
             consent.setId(consentId);
 
+            //Set Profile Meta Data
+            FhirProfileUtil.setConsentProfileMetaData(fhirClient, consent);
+
             //Validate
             FhirOperationUtil.validateFhirResource(fhirValidator, consent, Optional.of(consentId), ResourceType.Consent.name(), "Update Consent");
 
-            fhirClient.update().resource(consent).execute();
+            //Update
+            FhirOperationUtil.updateFhirResource(fhirClient, consent, ResourceType.Consent.name());
         } else {
             throw new DuplicateResourceFoundException("This patient already has a general designation consent.");
         }
@@ -367,7 +376,7 @@ public class ConsentServiceImpl implements ConsentService {
 
 
         try {
-            log.info("Updating consent: Generating the attested PDF");
+            log.info("Attest consent: Generating the attested PDF");
             byte[] pdfBytes = consentPdfGenerator.generateConsentPdf(detailedConsentDto, patientDto, operatedByPatient, Optional.empty());
             consent.setSource(addAttachment(pdfBytes));
 
@@ -376,10 +385,15 @@ public class ConsentServiceImpl implements ConsentService {
         }
         //consent.getSourceAttachment().getData();
         log.info("Updating consent: Saving the consent into the FHIR server.");
-        //Validate
-        FhirOperationUtil.validateFhirResource(fhirValidator, consent, Optional.empty(), ResourceType.Consent.name(), "Attest Consent");
 
-        fhirClient.update().resource(consent).execute();
+        //Set Profile Meta Data
+        FhirProfileUtil.setConsentProfileMetaData(fhirClient, consent);
+
+        //Validate
+        FhirOperationUtil.validateFhirResource(fhirValidator, consent, Optional.of(consentId), ResourceType.Consent.name(), "Attest Consent");
+
+        //Update
+        FhirOperationUtil.updateFhirResource(fhirClient, consent, ResourceType.Consent.name());
     }
 
     @Override
@@ -395,7 +409,7 @@ public class ConsentServiceImpl implements ConsentService {
         PatientDto patientDto = patientService.getPatientById(patientID, null);
 
         try {
-            log.info("Updating consent: Generating the revocation PDF");
+            log.info("Revoke consent: Generating the Revocation PDF");
             byte[] pdfBytes = consentRevocationPdfGenerator.generateConsentRevocationPdf(detailedConsentDto, patientDto, operatedByPatient, Optional.empty());
             consent.setSource(addAttachment(pdfBytes));
 
@@ -404,9 +418,15 @@ public class ConsentServiceImpl implements ConsentService {
         }
         //consent.getSourceAttachment().getData();
         log.info("Updating consent: Saving the consent into the FHIR server.");
+
+        //Set Profile Meta Data
+        FhirProfileUtil.setConsentProfileMetaData(fhirClient, consent);
+
         //Validate
-        FhirOperationUtil.validateFhirResource(fhirValidator, consent, Optional.empty(), ResourceType.Consent.name(), "Attest Consent");
-        fhirClient.update().resource(consent).execute();
+        FhirOperationUtil.validateFhirResource(fhirValidator, consent, Optional.of(consentId), ResourceType.Consent.name(), "Revoke Consent");
+
+        //Update
+        FhirOperationUtil.updateFhirResource(fhirClient, consent, ResourceType.Consent.name());
     }
 
     private Attachment addAttachment(byte[] pdfBytes) {
