@@ -8,7 +8,7 @@ import gov.samhsa.c2s.c2ssofapi.config.ConfigProperties;
 import gov.samhsa.c2s.c2ssofapi.service.dto.OrganizationDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.PageDto;
 import gov.samhsa.c2s.c2ssofapi.service.exception.OrganizationNotFoundException;
-import gov.samhsa.c2s.c2ssofapi.service.util.FhirUtil;
+import gov.samhsa.c2s.c2ssofapi.service.util.FhirOperationUtil;
 import gov.samhsa.c2s.c2ssofapi.service.util.PaginationUtil;
 import gov.samhsa.c2s.c2ssofapi.service.util.RichStringClientParam;
 import gov.samhsa.c2s.c2ssofapi.web.OrganizationController;
@@ -61,7 +61,7 @@ public class OrganizationServiceImpl implements OrganizationService {
         IQuery organizationIQuery = fhirClient.search().forResource(Organization.class);
 
         //Set Sort order
-        organizationIQuery = FhirUtil.setLastUpdatedTimeSortOrder(organizationIQuery, true);
+        organizationIQuery = FhirOperationUtil.setLastUpdatedTimeSortOrder(organizationIQuery, true);
 
         if (showInactive.isPresent()) {
             if (!showInactive.get())
@@ -175,7 +175,7 @@ public class OrganizationServiceImpl implements OrganizationService {
                 .sort().descending(PARAM_LASTUPDATED)
                 .returnBundle(Bundle.class).execute();
         if (bundle != null) {
-            organizations = FhirUtil.getAllBundleComponentsAsList(bundle, Optional.empty(), fhirClient, configProperties)
+            organizations = FhirOperationUtil.getAllBundleComponentsAsList(bundle, Optional.empty(), fhirClient, configProperties)
                     .stream()
                     .filter(it -> it.getResource().getResourceType().equals(ResourceType.PractitionerRole))
                     .map(it -> (PractitionerRole) it.getResource())
@@ -192,7 +192,7 @@ public class OrganizationServiceImpl implements OrganizationService {
     }
 
     private List<OrganizationDto> convertAllBundleToSingleOrganizationDtoList(Bundle firstPageOrganizationSearchBundle, int numberOBundlePerPage) {
-        return FhirUtil.getAllBundleComponentsAsList(firstPageOrganizationSearchBundle, Optional.of(numberOBundlePerPage), fhirClient, configProperties)
+        return FhirOperationUtil.getAllBundleComponentsAsList(firstPageOrganizationSearchBundle, Optional.of(numberOBundlePerPage), fhirClient, configProperties)
                 .stream()
                 .map(retrievedOrganization -> {
                     OrganizationDto organizationDto = modelMapper.map(retrievedOrganization.getResource(), OrganizationDto.class);

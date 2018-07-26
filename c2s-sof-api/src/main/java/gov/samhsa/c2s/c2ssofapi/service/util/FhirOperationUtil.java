@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
 import static ca.uhn.fhir.rest.api.Constants.PARAM_LASTUPDATED;
 
 @Slf4j
-public class FhirUtil {
+public class FhirOperationUtil {
     public static final int ACTIVITY_DEFINITION_FREQUENCY = 1;
     public static final int CARE_TEAM_END_DATE = 1;
     public static final int EPISODE_OF_CARE_END_PERIOD = 1;
@@ -110,7 +110,7 @@ public class FhirUtil {
     public static boolean checkParticipantRole(List<CareTeam.CareTeamParticipantComponent> components, String role) {
         return components.stream()
                 .filter(it -> it.getMember().getReference().contains(ResourceType.Practitioner.toString()))
-                .map(it -> FhirUtil.getRoleFromCodeableConcept(it.getRole()))
+                .map(it -> FhirOperationUtil.getRoleFromCodeableConcept(it.getRole()))
                 .anyMatch(t -> t.contains(role));
     }
 
@@ -352,7 +352,7 @@ public class FhirUtil {
                 .elementsSubset("id", "resourceType", "name", "identifier", "telecom", "address")
                 .execute();
 
-        List<Bundle.BundleEntryComponent> practitionerBundleEntryList = FhirUtil.getAllBundleComponentsAsList(practitionerBundle, Optional.empty(), fhirClient, configProperties);
+        List<Bundle.BundleEntryComponent> practitionerBundleEntryList = FhirOperationUtil.getAllBundleComponentsAsList(practitionerBundle, Optional.empty(), fhirClient, configProperties);
 
         return practitionerBundleEntryList.stream().map(pr -> {
             AbstractCareTeamDto abstractCareTeamDto = new AbstractCareTeamDto();
@@ -405,7 +405,7 @@ public class FhirUtil {
                 .elementsSubset("id", "resourceType", "name", "identifier", "telecom", "address")
                 .execute();
 
-        List<Bundle.BundleEntryComponent> relatedPersonBundleEntryList = FhirUtil.getAllBundleComponentsAsList(relatedBundle, Optional.empty(), fhirClient, configProperties);
+        List<Bundle.BundleEntryComponent> relatedPersonBundleEntryList = FhirOperationUtil.getAllBundleComponentsAsList(relatedBundle, Optional.empty(), fhirClient, configProperties);
 
         return  relatedPersonBundleEntryList.stream().map(rp -> {
             AbstractCareTeamDto abstractCareTeamDto = new AbstractCareTeamDto();

@@ -161,7 +161,7 @@ public class FhirDtoUtil {
     public static CodeableConcept convertValuesetDtoToCodeableConcept(ValueSetDto valueSetDto) {
         CodeableConcept codeableConcept = new CodeableConcept();
         if (valueSetDto != null) {
-            Coding coding = FhirUtil.getCoding(valueSetDto.getCode(), valueSetDto.getDisplay(), valueSetDto.getSystem());
+            Coding coding = FhirOperationUtil.getCoding(valueSetDto.getCode(), valueSetDto.getDisplay(), valueSetDto.getSystem());
             codeableConcept.addCoding(coding);
         }
         return codeableConcept;
