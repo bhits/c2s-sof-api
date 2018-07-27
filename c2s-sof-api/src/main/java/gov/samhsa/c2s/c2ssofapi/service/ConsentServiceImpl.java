@@ -67,17 +67,19 @@ import static java.util.stream.Collectors.toList;
 @Service
 @Slf4j
 public class ConsentServiceImpl implements ConsentService {
-    private static final String INFORMANT_CODE = "INF";
-    private static final String INFORMANT_RECIPIENT_CODE = "IRCP";
     private static final String PSEUDO_ORGANIZATION_NAME = "Omnibus Care Plan (SAMHSA)";
     private static final String PSEUDO_ORGANIZATION_TAX_ID = "530196960";
-    private static final String CONTENT_TYPE = "application/pdf";
-    private static final Boolean operatedByPatient = true;
-    private static final String PURPOSE_OF_USE_CODING_SYSTEM = "http://hl7.org/fhir/v3/ActReason"; //Temp, should be http://hl7.org/fhir/ValueSet/v3-PurposeOfUse
-    private static final String ACTION_CODE = "disclose";
-    private static final String ACTION_CODING_SYSTEM = "http://hl7.org/fhir/consentaction";
-    private static final String ACTION_DISPLAY = "Disclose";
 
+    private static final String CONSENT_CUSTODIAN_CODE = "CST";
+    private static final String CONSENT_INFORMANT_RECIPIENT_CODE = "IRCP";
+
+    private static final String CONSENT_PURPOSE_OF_USE_CODING_SYSTEM = "http://hl7.org/fhir/v3/ActReason";
+    private static final String CONSENT_ACTION_CODE = "disclose";
+    private static final String CONSENT_ACTION_CODING_SYSTEM = "http://hl7.org/fhir/consentaction";
+    private static final String CONSENT_ACTION_DISPLAY = "Disclose";
+
+    private static final String CONTENT_TYPE = "application/pdf";
+    private static final Boolean OPERATED_BY_PATIENT = true;
 
     private final IGenericClient fhirClient;
     private final LookUpService lookUpService;
@@ -238,10 +240,14 @@ public class ConsentServiceImpl implements ConsentService {
             if (!associatedCareTeam.getEntry().isEmpty()) {
                 if (!isDuplicate(consentDto, Optional.empty())) {
                     Consent consent = consentDtoToConsent(Optional.empty(), consentDto);
+                    //Set Profile Meta Data
+                    FhirProfileUtil.setConsentProfileMetaData(fhirClient, consent);
+
                     //Validate
                     FhirOperationUtil.validateFhirResource(fhirValidator, consent, Optional.empty(), ResourceType.Consent.name(), "Create Consent");
 
-                    fhirClient.create().resource(consent).execute();
+                    //Create
+                    FhirOperationUtil.createFhirResource(fhirClient, consent, ResourceType.Consent.name());
                 } else {
                     throw new DuplicateResourceFoundException("This patient already has a general designation consent.");
                 }
@@ -329,7 +335,7 @@ public class ConsentServiceImpl implements ConsentService {
                 String patientID = consentDto.getPatient().getReference().replace("Patient/", "");
                 PatientDto patientDto = patientService.getPatientById(patientID, Optional.empty());
                 log.info("Generating consent PDF");
-                byte[] pdfBytes = consentPdfGenerator.generateConsentPdf(detailedConsentDto, patientDto, operatedByPatient, Optional.empty());
+                byte[] pdfBytes = consentPdfGenerator.generateConsentPdf(detailedConsentDto, patientDto, OPERATED_BY_PATIENT, Optional.empty());
                 detailedConsentDto.setSourceAttachment(pdfBytes);
             }
 
@@ -388,7 +394,7 @@ public class ConsentServiceImpl implements ConsentService {
 
         try {
             log.info("Attest consent: Generating the attested PDF");
-            byte[] pdfBytes = consentPdfGenerator.generateConsentPdf(detailedConsentDto, patientDto, operatedByPatient, Optional.empty());
+            byte[] pdfBytes = consentPdfGenerator.generateConsentPdf(detailedConsentDto, patientDto, OPERATED_BY_PATIENT, Optional.empty());
             consent.setSource(addAttachment(pdfBytes));
 
         } catch (IOException e) {
@@ -421,7 +427,7 @@ public class ConsentServiceImpl implements ConsentService {
 
         try {
             log.info("Revoke consent: Generating the Revocation PDF");
-            byte[] pdfBytes = consentRevocationPdfGenerator.generateConsentRevocationPdf(detailedConsentDto, patientDto, operatedByPatient, Optional.empty());
+            byte[] pdfBytes = consentRevocationPdfGenerator.generateConsentRevocationPdf(detailedConsentDto, patientDto, OPERATED_BY_PATIENT, Optional.empty());
             consent.setSource(addAttachment(pdfBytes));
 
         } catch (IOException e) {
@@ -456,7 +462,7 @@ public class ConsentServiceImpl implements ConsentService {
 
         try {
             log.info("Generating consent PDF");
-            byte[] pdfBytes = consentPdfGenerator.generateConsentPdf(detailedConsentDto, patientDto, operatedByPatient, Optional.empty());
+            byte[] pdfBytes = consentPdfGenerator.generateConsentPdf(detailedConsentDto, patientDto, OPERATED_BY_PATIENT, Optional.empty());
             return new PdfDto(pdfBytes);
 
         } catch (IOException e) {
@@ -479,23 +485,15 @@ public class ConsentServiceImpl implements ConsentService {
         // Set UUID
         consent.setPolicyRule(UUID.randomUUID().toString());
 
-        // Set category
-        if (!consentDto.getCategory().isEmpty() && consentDto.getCategory() != null) {
-            List<CodeableConcept> categories = consentDto.getCategory().stream()
-                    .map(FhirDtoUtil::convertValuesetDtoToCodeableConcept)
-                    .collect(toList());
-            consent.setCategory(categories);
-        }
-
         // Consenting Party
         consent.getConsentingParty().add(FhirDtoUtil.mapReferenceDtoToReference(consentDto.getPatient()));
 
         //Set Action
         CodeableConcept actionConcept = new CodeableConcept();
         actionConcept.addCoding(
-                new Coding().setCode(ACTION_CODE)
-                        .setSystem(ACTION_CODING_SYSTEM)
-                        .setDisplay(ACTION_DISPLAY)
+                new Coding().setCode(CONSENT_ACTION_CODE)
+                        .setSystem(CONSENT_ACTION_CODING_SYSTEM)
+                        .setDisplay(CONSENT_ACTION_DISPLAY)
         );
         consent.getAction().add(actionConcept);
 
@@ -510,7 +508,7 @@ public class ConsentServiceImpl implements ConsentService {
                 Coding coding = new Coding();
                 coding.setDisplay((purpose.getDisplay() != null && !purpose.getDisplay().isEmpty()) ? purpose.getDisplay() : null)
                         .setCode((purpose.getCode() != null && !purpose.getCode().isEmpty()) ? purpose.getCode() : null)
-                        .setSystem((purpose.getSystem() != null && !purpose.getSystem().isEmpty()) ? purpose.getSystem() : PURPOSE_OF_USE_CODING_SYSTEM);
+                        .setSystem((purpose.getSystem() != null && !purpose.getSystem().isEmpty()) ? purpose.getSystem() : CONSENT_PURPOSE_OF_USE_CODING_SYSTEM);
                 return coding;
             }).collect(toList());
 
@@ -518,12 +516,12 @@ public class ConsentServiceImpl implements ConsentService {
         }
 
         if (consentDto.getStatus() != null) {
-                try {
-                    consent.setStatus(Consent.ConsentState.fromCode(consentDto.getStatus()));
-                } catch (FHIRException e) {
-                    throw new ResourceNotFoundException("Invalid consent status found.");
-                }
+            try {
+                consent.setStatus(Consent.ConsentState.fromCode(consentDto.getStatus()));
+            } catch (FHIRException e) {
+                throw new ResourceNotFoundException("Invalid consent status found.");
             }
+        }
 
         //Setting identifier
         if (!consentId.isPresent()) {
@@ -553,7 +551,7 @@ public class ConsentServiceImpl implements ConsentService {
             if (consentDto.isGeneralDesignation()) {
                 Consent.ConsentActorComponent fromActor = new Consent.ConsentActorComponent();
                 fromActor.setReference(FhirDtoUtil.mapReferenceDtoToReference(referenceDto))
-                        .setRole(FhirDtoUtil.convertValuesetDtoToCodeableConcept(FhirDtoUtil.convertCodeToValueSetDto(INFORMANT_CODE, lookUpService.getSecurityRole())));
+                        .setRole(FhirDtoUtil.convertValuesetDtoToCodeableConcept(FhirDtoUtil.convertCodeToValueSetDto(CONSENT_CUSTODIAN_CODE, lookUpService.getSecurityRole())));
                 actors.add(fromActor);
             }
         });
@@ -564,19 +562,19 @@ public class ConsentServiceImpl implements ConsentService {
                     .where(new ReferenceClientParam("subject").hasId(consentDto.getPatient().getReference()))
                     .returnBundle(Bundle.class).execute();
 
-            careTeamBundle.getEntry().stream().map(careTeamEntry -> (CareTeam) careTeamEntry.getResource()).map(careTeam -> convertCareTeamToActor(careTeam, FhirDtoUtil.convertCodeToValueSetDto(INFORMANT_RECIPIENT_CODE, lookUpService
+            careTeamBundle.getEntry().stream().map(careTeamEntry -> (CareTeam) careTeamEntry.getResource()).map(careTeam -> convertCareTeamToActor(careTeam, FhirDtoUtil.convertCodeToValueSetDto(CONSENT_INFORMANT_RECIPIENT_CODE, lookUpService
                     .getSecurityRole()))).forEach(actors::add);
             consent.setActor(actors);
         } else {
             List<Consent.ConsentActorComponent> fromActors = consentDto.getFromActor().stream().map(fromActor -> {
                 Consent.ConsentActorComponent from = new Consent.ConsentActorComponent();
-                from.setReference(FhirDtoUtil.mapReferenceDtoToReference(fromActor)).setRole(FhirDtoUtil.convertValuesetDtoToCodeableConcept(FhirDtoUtil.convertCodeToValueSetDto(INFORMANT_CODE, lookUpService.getSecurityRole())));
+                from.setReference(FhirDtoUtil.mapReferenceDtoToReference(fromActor)).setRole(FhirDtoUtil.convertValuesetDtoToCodeableConcept(FhirDtoUtil.convertCodeToValueSetDto(CONSENT_CUSTODIAN_CODE, lookUpService.getSecurityRole())));
                 return from;
             }).collect(toList());
 
             List<Consent.ConsentActorComponent> toActors = consentDto.getToActor().stream().map(toActor -> {
                 Consent.ConsentActorComponent to = new Consent.ConsentActorComponent();
-                to.setReference(FhirDtoUtil.mapReferenceDtoToReference(toActor)).setRole(FhirDtoUtil.convertValuesetDtoToCodeableConcept(FhirDtoUtil.convertCodeToValueSetDto(INFORMANT_RECIPIENT_CODE, lookUpService.getSecurityRole())));
+                to.setReference(FhirDtoUtil.mapReferenceDtoToReference(toActor)).setRole(FhirDtoUtil.convertValuesetDtoToCodeableConcept(FhirDtoUtil.convertCodeToValueSetDto(CONSENT_INFORMANT_RECIPIENT_CODE, lookUpService.getSecurityRole())));
                 return to;
             }).collect(toList());
 
@@ -642,7 +640,7 @@ public class ConsentServiceImpl implements ConsentService {
                     .returnBundle(Bundle.class).execute();
             boolean checkFromBundle = consentBundle.getEntry().stream().anyMatch(consentBundleEntry -> {
                 Consent consent = (Consent) consentBundleEntry.getResource();
-                List<String> fromActor = getReferenceOfCareTeam(consent, INFORMANT_CODE);
+                List<String> fromActor = getReferenceOfCareTeam(consent, CONSENT_CUSTODIAN_CODE);
 
                 Optional<String> pseudoOrgRef = getPseudoOrganization().getEntry().stream().findFirst().map(pseudoOrg -> {
                     Organization organization = (Organization) pseudoOrg.getResource();
