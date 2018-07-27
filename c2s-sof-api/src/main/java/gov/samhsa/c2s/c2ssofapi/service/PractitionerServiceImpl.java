@@ -7,7 +7,7 @@ import gov.samhsa.c2s.c2ssofapi.config.ConfigProperties;
 import gov.samhsa.c2s.c2ssofapi.service.dto.PageDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.PractitionerDto;
 import gov.samhsa.c2s.c2ssofapi.service.exception.ResourceNotFoundException;
-import gov.samhsa.c2s.c2ssofapi.service.util.FhirUtil;
+import gov.samhsa.c2s.c2ssofapi.service.util.FhirOperationUtil;
 import gov.samhsa.c2s.c2ssofapi.service.util.PaginationUtil;
 import gov.samhsa.c2s.c2ssofapi.service.util.RichStringClientParam;
 import gov.samhsa.c2s.c2ssofapi.web.PractitionerController;
@@ -54,7 +54,6 @@ public class PractitionerServiceImpl implements PractitionerService {
             throw new ResourceNotFoundException("No practitioner was found for the givecn practitionerID:" + practitionerId);
         }
 
-        List<Bundle.BundleEntryComponent> retrievedPractitioners = practitionerBundle.getEntry();
         Bundle.BundleEntryComponent retrievedPractitioner = practitionerBundle.getEntry().get(0);
 
         PractitionerDto practitionerDto = modelMapper.map(retrievedPractitioner.getResource(), PractitionerDto.class);
@@ -123,7 +122,7 @@ public class PractitionerServiceImpl implements PractitionerService {
         IQuery practitionerIQuery = fhirClient.search().forResource(Practitioner.class);
 
         //Set Sort order
-        practitionerIQuery = FhirUtil.setLastUpdatedTimeSortOrder(practitionerIQuery, true);
+        practitionerIQuery = FhirOperationUtil.setLastUpdatedTimeSortOrder(practitionerIQuery, true);
 
         Bundle firstPagePractitionerBundle;
         Bundle otherPagePractitionerBundle;
@@ -153,7 +152,7 @@ public class PractitionerServiceImpl implements PractitionerService {
     }
 
     private List<PractitionerDto> convertAllBundleToSinglePractitionerDtoList(Bundle firstPageSearchBundle, int numberOfBundlePerPage) {
-        List<Bundle.BundleEntryComponent> bundleEntryComponents = FhirUtil.getAllBundleComponentsAsList(firstPageSearchBundle, Optional.of(numberOfBundlePerPage), fhirClient, configProperties);
+        List<Bundle.BundleEntryComponent> bundleEntryComponents = FhirOperationUtil.getAllBundleComponentsAsList(firstPageSearchBundle, Optional.of(numberOfBundlePerPage), fhirClient, configProperties);
         return bundleEntryComponents.stream().filter(pr -> pr.getResource().getResourceType().equals(ResourceType.Practitioner))
                 .map(prac -> this.covertEntryComponentToPractitioner(prac, bundleEntryComponents)).collect(toList());
     }

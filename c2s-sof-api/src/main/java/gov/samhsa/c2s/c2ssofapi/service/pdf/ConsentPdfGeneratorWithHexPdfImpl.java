@@ -415,17 +415,21 @@ public class ConsentPdfGeneratorWithHexPdfImpl implements ConsentPdfGenerator {
     }
 
     private String composeAddress(AddressDto addressDto) {
-        return addressDto.getLine1()
-                .concat(filterNullAddressValue(addressDto.getLine2()))
-                .concat(filterNullAddressValue(addressDto.getCity()))
-                .concat(filterNullAddressValue(addressDto.getStateCode()))
-                .concat(filterNullAddressValue(addressDto.getPostalCode()))
-                .concat(filterNullAddressValue(addressDto.getCountryCode()));
+        if(addressDto != null){
+            return addressDto.getLine1()
+                    .concat(filterNullAddressValue(addressDto.getLine2()))
+                    .concat(filterNullAddressValue(addressDto.getCity()))
+                    .concat(filterNullAddressValue(addressDto.getStateCode()))
+                    .concat(filterNullAddressValue(addressDto.getPostalCode()))
+                    .concat(filterNullAddressValue(addressDto.getCountryCode()));
+        }
+        return "";
+
     }
 
     private static String filterNullAddressValue(String value) {
         final String commaPattern = ", ";
-        if (value == null) {
+        if (value == null || value.trim().isEmpty()) {
             return "";
         } else {
             return commaPattern.concat(value);

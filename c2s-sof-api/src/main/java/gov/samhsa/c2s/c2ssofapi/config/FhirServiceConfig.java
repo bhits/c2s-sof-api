@@ -6,6 +6,9 @@ import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.interceptor.BearerTokenAuthInterceptor;
 import ca.uhn.fhir.validation.FhirValidator;
 import gov.samhsa.c2s.c2ssofapi.service.exception.PreconditionFailedException;
+import org.hl7.fhir.dstu3.hapi.validation.DefaultProfileValidationSupport;
+import org.hl7.fhir.dstu3.hapi.validation.FhirInstanceValidator;
+import org.hl7.fhir.dstu3.hapi.validation.ValidationSupportChain;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -68,6 +71,11 @@ public class FhirServiceConfig {
 
     @Bean
     public FhirValidator fhirValidator() {
-        return fhirContext().newValidator();
+        FhirValidator validator = fhirContext().newValidator();
+        FhirInstanceValidator instanceValidator = new FhirInstanceValidator();
+        validator.registerValidatorModule(instanceValidator);
+        ValidationSupportChain support = new ValidationSupportChain(new DefaultProfileValidationSupport());
+        instanceValidator.setValidationSupport(support);
+        return validator;
     }
 }
