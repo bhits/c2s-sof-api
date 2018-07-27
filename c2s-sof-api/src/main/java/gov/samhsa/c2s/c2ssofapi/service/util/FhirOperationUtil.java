@@ -55,20 +55,22 @@ public class FhirOperationUtil {
         }
     }
 
-    public static void createFhirResource(IGenericClient fhirClient, DomainResource fhirResource, String fhirResourceName) {
+    public static MethodOutcome createFhirResource(IGenericClient fhirClient, DomainResource fhirResource, String fhirResourceName) {
         try {
             MethodOutcome serverResponse = fhirClient.create().resource(fhirResource).execute();
             log.info("Created a new " + fhirResourceName + " : " + serverResponse.getId().getIdPart());
+            return serverResponse;
         } catch (BaseServerResponseException e) {
             log.error("Could NOT create " + fhirResourceName);
             throw new FHIRClientException("FHIR Client returned with an error while creating the " + fhirResourceName + " : " + e.getMessage());
         }
     }
 
-    public static void updateFhirResource(IGenericClient fhirClient, DomainResource fhirResource, String actionAndResourceName) {
+    public static MethodOutcome updateFhirResource(IGenericClient fhirClient, DomainResource fhirResource, String actionAndResourceName) {
         try {
             MethodOutcome serverResponse = fhirClient.update().resource(fhirResource).execute();
             log.info(actionAndResourceName + " was successful for Id: " + serverResponse.getId().getIdPart());
+            return serverResponse;
         } catch (BaseServerResponseException e) {
             log.error("Could NOT " + actionAndResourceName + " with Id: " + fhirResource.getIdElement().getIdPart());
             throw new FHIRClientException("FHIR Client returned with an error during" + actionAndResourceName + " : " + e.getMessage());
@@ -132,6 +134,12 @@ public class FhirOperationUtil {
             case "CONSENT":
                 structureDefinitionBundle = fhirClient.search().forResource(StructureDefinition.class)
                         .where(new TokenClientParam("type").exactly().code("Consent"))
+                        .returnBundle(Bundle.class)
+                        .execute();
+                break;
+            case "ORGANIZATION":
+                structureDefinitionBundle = fhirClient.search().forResource(StructureDefinition.class)
+                        .where(new TokenClientParam("type").exactly().code("Organization"))
                         .returnBundle(Bundle.class)
                         .execute();
                 break;
