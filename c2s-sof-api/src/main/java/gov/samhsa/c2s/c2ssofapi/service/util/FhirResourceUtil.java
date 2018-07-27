@@ -10,6 +10,7 @@ import gov.samhsa.c2s.c2ssofapi.service.dto.AddressDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.IdentifierDto;
 import gov.samhsa.c2s.c2ssofapi.service.exception.IdentifierSystemNotFoundException;
 import lombok.extern.slf4j.Slf4j;
+import org.hl7.fhir.dstu3.model.ActivityDefinition;
 import org.hl7.fhir.dstu3.model.Address;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.CareTeam;
@@ -20,14 +21,19 @@ import org.hl7.fhir.dstu3.model.Extension;
 import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.Organization;
 import org.hl7.fhir.dstu3.model.Patient;
+import org.hl7.fhir.dstu3.model.Period;
 import org.hl7.fhir.dstu3.model.Practitioner;
+import org.hl7.fhir.dstu3.model.RelatedArtifact;
 import org.hl7.fhir.dstu3.model.RelatedPerson;
 import org.hl7.fhir.dstu3.model.ResourceType;
+import org.hl7.fhir.dstu3.model.Timing;
 import org.hl7.fhir.dstu3.model.Type;
 import org.hl7.fhir.dstu3.model.codesystems.ContactPointSystem;
+import org.hl7.fhir.dstu3.model.codesystems.DefinitionTopic;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -35,9 +41,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class FhirResourceUtil {
     public static final int ACTIVITY_DEFINITION_FREQUENCY = 1;
-    public static final int CARE_TEAM_END_DATE = 1;
-    public static final int EPISODE_OF_CARE_END_PERIOD = 1;
-    public static final String CARE_MANAGER_CODE = "CAREMNGR";
+    public static final String TO_DO = "To-Do";
 
     public static final String OID_TEXT = "urn:oid:";
     public static final String URL_TEXT = "http";
@@ -166,7 +170,7 @@ public class FhirResourceUtil {
 
         if (identifier != null) {
             String systemOid = identifier.getSystem() != null ? identifier.getSystem() : "";
-            String systemDisplay = null;
+            String systemDisplay;
 
             try {
                 if (systemOid.startsWith(OID_TEXT) || systemOid.startsWith(URL_TEXT)) {
@@ -209,7 +213,7 @@ public class FhirResourceUtil {
             abstractCareTeamDto.setDisplay(organization.getName());
             abstractCareTeamDto.setCareTeamType(AbstractCareTeamDto.CareTeamType.ORGANIZATION);
             List<IdentifierDto> identifierDtos = organization.getIdentifier().stream()
-                    .map(identifier -> entireCovertIdentifierToIdentifierDto(identifier))
+                    .map(FhirResourceUtil::entireCovertIdentifierToIdentifierDto)
                     .collect(Collectors.toList());
             abstractCareTeamDto.setIdentifiers(identifierDtos);
 
@@ -252,13 +256,11 @@ public class FhirResourceUtil {
             AbstractCareTeamDto abstractCareTeamDto = new AbstractCareTeamDto();
             Practitioner practitioner = (Practitioner) pr.getResource();
             abstractCareTeamDto.setId(practitioner.getIdElement().getIdPart());
-            practitioner.getName().stream().findAny().ifPresent(humanName -> {
-                abstractCareTeamDto.setDisplay(humanName.getGiven().stream().findAny().get() + " " + humanName.getFamily());
-            });
+            practitioner.getName().stream().findAny().ifPresent(humanName -> abstractCareTeamDto.setDisplay(humanName.getGiven().stream().findAny().get() + " " + humanName.getFamily()));
 
             abstractCareTeamDto.setCareTeamType(AbstractCareTeamDto.CareTeamType.PRACTITIONER);
             List<IdentifierDto> identifierDtos = practitioner.getIdentifier().stream()
-                    .map(identifier -> entireCovertIdentifierToIdentifierDto(identifier))
+                    .map(FhirResourceUtil::entireCovertIdentifierToIdentifierDto)
                     .collect(Collectors.toList());
             abstractCareTeamDto.setIdentifiers(identifierDtos);
 
@@ -307,12 +309,10 @@ public class FhirResourceUtil {
             abstractCareTeamDto.setId(relatedPerson.getIdElement().getIdPart());
 
             abstractCareTeamDto.setCareTeamType(AbstractCareTeamDto.CareTeamType.RELATEDPERSON);
-            relatedPerson.getName().stream().findAny().ifPresent(humanName -> {
-                abstractCareTeamDto.setDisplay(humanName.getGiven().stream().findAny().get() + " " + humanName.getFamily());
-            });
+            relatedPerson.getName().stream().findAny().ifPresent(humanName -> abstractCareTeamDto.setDisplay(humanName.getGiven().stream().findAny().get() + " " + humanName.getFamily()));
 
             List<IdentifierDto> identifierDtos = relatedPerson.getIdentifier().stream()
-                    .map(identifier -> entireCovertIdentifierToIdentifierDto(identifier))
+                    .map(FhirResourceUtil::entireCovertIdentifierToIdentifierDto)
                     .collect(Collectors.toList());
             abstractCareTeamDto.setIdentifiers(identifierDtos);
 
@@ -362,9 +362,9 @@ public class FhirResourceUtil {
 
 
     public static List<String> participantIds(Optional<String> participantId, Optional<String> patientId, Optional<List<String>> careTeams, IGenericClient fhirClient) {
-        List<String> participantIds = new ArrayList<>();
+        List<String> participantIds;
         if (participantId.isPresent()) {
-            participantIds = Arrays.asList(participantId.get());
+            participantIds = Collections.singletonList(participantId.get());
         } else if (careTeams.isPresent()) {
             participantIds = getParticipantIdFromCareTeam(careTeams, fhirClient);
         } else {
@@ -378,6 +378,52 @@ public class FhirResourceUtil {
 
         return bundle.getEntry().stream().map(ct -> (CareTeam) ct.getResource()).flatMap(ct -> ct.getParticipant().stream().map(par -> par.getMember().getReference().split("/")[1])).distinct().collect(Collectors.toList());
 
+    }
+
+    public static ActivityDefinition createToDoActivityDefinition(String referenceOrganization) {
+        ActivityDefinition activityDefinition = new ActivityDefinition();
+        activityDefinition.setVersion("1.1.0");
+        activityDefinition.setName(TO_DO);
+        activityDefinition.setTitle(TO_DO);
+
+        activityDefinition.setStatus(Enumerations.PublicationStatus.ACTIVE);
+
+        activityDefinition.setKind(ActivityDefinition.ActivityDefinitionKind.ACTIVITYDEFINITION);
+        CodeableConcept topic = new CodeableConcept();
+        topic.addCoding().setCode(DefinitionTopic.TREATMENT.toCode()).setDisplay(DefinitionTopic.TREATMENT.getDisplay())
+                .setSystem(DefinitionTopic.TREATMENT.getSystem());
+        activityDefinition.setTopic(Collections.singletonList(topic));
+
+        activityDefinition.setDate(java.sql.Date.valueOf(LocalDate.now()));
+        activityDefinition.setPublisher("Organization/" + referenceOrganization);
+        activityDefinition.setDescription(TO_DO);
+
+        Period period = new Period();
+        period.setStart(java.sql.Date.valueOf(LocalDate.now()));
+        period.setEnd(java.sql.Date.valueOf(LocalDate.now().plusYears(20)));
+        activityDefinition.setEffectivePeriod(period);
+
+        Timing timing = new Timing();
+        timing.getRepeat().setDurationMax(10);
+        timing.getRepeat().setDuration(10);
+        timing.getRepeat().setDurationUnit(Timing.UnitsOfTime.D);
+        timing.getRepeat().setFrequency(ACTIVITY_DEFINITION_FREQUENCY);
+        activityDefinition.setTiming(timing);
+
+        CodeableConcept participantRole = new CodeableConcept();
+        participantRole.addCoding().setCode("O")
+                .setDisplay("Other")
+                .setSystem("http://hl7.org/fhir/v2/0131");
+        activityDefinition.addParticipant()
+                .setRole(participantRole)
+                .setType(ActivityDefinition.ActivityParticipantType.PRACTITIONER);
+
+        RelatedArtifact relatedArtifact = new RelatedArtifact();
+        relatedArtifact.setType(RelatedArtifact.RelatedArtifactType.DOCUMENTATION);
+        relatedArtifact.setDisplay("To-Do List");
+        activityDefinition.setRelatedArtifact(Collections.singletonList(relatedArtifact));
+
+        return activityDefinition;
     }
 
     public static boolean isStringNotNullAndNotEmpty(String givenString) {
