@@ -13,7 +13,7 @@ import java.util.List;
 public class ConsentActorComponentListToConsenFromReferenceDtoListConverter extends AbstractConverter<List<Consent.ConsentActorComponent>, List<ReferenceDto>> {
     @Override
     protected List<ReferenceDto> convert(List<Consent.ConsentActorComponent> source) {
-        final String code = "INF";
+        final String code = "CST";
         List<ReferenceDto> referenceDtos = new ArrayList<>();
 
         if (source != null && source.size() > 0) {
