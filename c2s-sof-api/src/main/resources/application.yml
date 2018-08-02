@@ -42,3 +42,4 @@ c2s-sof-api:
         title: Revocation of Consent to Share My Health Information
         pdFont: TIMES_ROMAN
         pdfPageSize: LETTER
+  provenanceEnabled: true
