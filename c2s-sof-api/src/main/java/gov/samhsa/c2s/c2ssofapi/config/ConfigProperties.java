@@ -46,6 +46,9 @@ public class ConfigProperties {
     @Valid
     private Patient patient;
 
+    @NotNull
+    private boolean provenanceEnabled;
+
     @Data
     public static class Fhir {
         @NotBlank

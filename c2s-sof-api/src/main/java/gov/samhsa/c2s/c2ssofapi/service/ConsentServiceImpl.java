@@ -7,6 +7,7 @@ import ca.uhn.fhir.rest.gclient.ReferenceClientParam;
 import ca.uhn.fhir.rest.gclient.TokenClientParam;
 import ca.uhn.fhir.validation.FhirValidator;
 import gov.samhsa.c2s.c2ssofapi.config.ConfigProperties;
+import gov.samhsa.c2s.c2ssofapi.service.constant.ProvenanceActivityEnum;
 import gov.samhsa.c2s.c2ssofapi.service.dto.AbstractCareTeamDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.ConsentDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.ConsentMedicalInfoType;
@@ -89,6 +90,7 @@ public class ConsentServiceImpl implements ConsentService {
     private final ConsentRevocationPdfGenerator consentRevocationPdfGenerator;
 
     private final PatientService patientService;
+    private final ProvenanceUtil provenanceUtil;
 
     private final FhirValidator fhirValidator;
 
@@ -100,7 +102,8 @@ public class ConsentServiceImpl implements ConsentService {
                               ConfigProperties configProperties,
                               ConsentPdfGenerator consentPdfGenerator,
                               ConsentRevocationPdfGenerator consentRevocationPdfGenerator,
-                              PatientService patientService, FhirValidator fhirValidator) {
+                              PatientService patientService, FhirValidator fhirValidator,
+                              ProvenanceUtil provenanceUtil) {
         this.modelMapper = modelMapper;
         this.fhirClient = fhirClient;
         this.lookUpService = lookUpService;
@@ -109,6 +112,7 @@ public class ConsentServiceImpl implements ConsentService {
         this.consentRevocationPdfGenerator = consentRevocationPdfGenerator;
         this.patientService = patientService;
         this.fhirValidator = fhirValidator;
+        this.provenanceUtil = provenanceUtil;
     }
 
     @Override
@@ -234,6 +238,8 @@ public class ConsentServiceImpl implements ConsentService {
     @Override
     public void createConsent(ConsentDto consentDto) {
         //Create Consent
+        List<String> idList = new ArrayList<>();
+
         Bundle associatedCareTeam = fhirClient.search().forResource(CareTeam.class).where(new ReferenceClientParam("patient").hasId(consentDto.getPatient().getReference()))
                 .returnBundle(Bundle.class).execute();
         if (consentDto.isGeneralDesignation()) {
@@ -247,7 +253,12 @@ public class ConsentServiceImpl implements ConsentService {
                     FhirOperationUtil.validateFhirResource(fhirValidator, consent, Optional.empty(), ResourceType.Consent.name(), "Create Consent");
 
                     //Create
-                    FhirOperationUtil.createFhirResource(fhirClient, consent, ResourceType.Consent.name());
+                    MethodOutcome methodOutcome = FhirOperationUtil.createFhirResource(fhirClient, consent, ResourceType.Consent.name());
+                    idList.add(ResourceType.Consent.name() + "/" + FhirOperationUtil.getFhirId(methodOutcome));
+
+                    if(configProperties.isProvenanceEnabled()) {
+                        provenanceUtil.createProvenance(idList, ProvenanceActivityEnum.CREATE, Optional.empty());
+                    }
                 } else {
                     throw new DuplicateResourceFoundException("This patient already has a general designation consent.");
                 }
@@ -264,7 +275,12 @@ public class ConsentServiceImpl implements ConsentService {
             FhirOperationUtil.validateFhirResource(fhirValidator, consent, Optional.empty(), ResourceType.Consent.name(), "Create Consent");
 
             //Create
-            FhirOperationUtil.createFhirResource(fhirClient, consent, ResourceType.Consent.name());
+            MethodOutcome methodOutcome = FhirOperationUtil.createFhirResource(fhirClient, consent, ResourceType.Consent.name());
+            idList.add(ResourceType.Consent.name() + "/" + FhirOperationUtil.getFhirId(methodOutcome));
+
+            if(configProperties.isProvenanceEnabled()) {
+                provenanceUtil.createProvenance(idList, ProvenanceActivityEnum.CREATE, Optional.empty());
+            }
         }
     }
 
@@ -272,6 +288,8 @@ public class ConsentServiceImpl implements ConsentService {
     public void updateConsent(String consentId, ConsentDto consentDto) {
         //Update Consent
         if (!isDuplicate(consentDto, Optional.of(consentId))) {
+            List<String> idList = new ArrayList<>();
+
             Consent consent = consentDtoToConsent(Optional.of(consentId), consentDto);
             consent.setId(consentId);
 
@@ -282,7 +300,13 @@ public class ConsentServiceImpl implements ConsentService {
             FhirOperationUtil.validateFhirResource(fhirValidator, consent, Optional.of(consentId), ResourceType.Consent.name(), "Update Consent");
 
             //Update
-            FhirOperationUtil.updateFhirResource(fhirClient, consent, "Update Consent");
+            MethodOutcome methodOutcome = FhirOperationUtil.updateFhirResource(fhirClient, consent, "Update Consent");
+            idList.add(ResourceType.Consent.name() + "/" + FhirOperationUtil.getFhirId(methodOutcome));
+
+            if(configProperties.isProvenanceEnabled()) {
+                provenanceUtil.createProvenance(idList, ProvenanceActivityEnum.UPDATE, Optional.empty());
+            }
+
         } else {
             throw new DuplicateResourceFoundException("This patient already has a general designation consent.");
         }
