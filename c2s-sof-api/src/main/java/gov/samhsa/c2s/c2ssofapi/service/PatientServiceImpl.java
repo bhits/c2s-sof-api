@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.ZoneId;
-import java.util.List;
 import java.util.Optional;
 
 import static java.util.stream.Collectors.toList;
@@ -24,22 +23,17 @@ import static java.util.stream.Collectors.toList;
 @Slf4j
 public class PatientServiceImpl implements PatientService {
 
-    @Autowired
-    private IGenericClient fhirClient;
+    private final IGenericClient fhirClient;
+
+    private final ModelMapper modelMapper;
+
+    private final ConfigProperties configProperties;
 
     @Autowired
-    private ModelMapper modelMapper;
-
-    @Autowired
-    private ConfigProperties configProperties;
-
-    private PatientDto mapPatientToPatientDto(Patient patient, List<Bundle.BundleEntryComponent> response) {
-        PatientDto patientDto = modelMapper.map(patient, PatientDto.class);
-        patientDto.setId(patient.getIdElement().getIdPart());
-
-        if (patient.getGender() != null)
-            patientDto.setGenderCode(patient.getGender().toCode());
-        return patientDto;
+    public PatientServiceImpl(IGenericClient fhirClient, ModelMapper modelMapper, ConfigProperties configProperties) {
+        this.fhirClient = fhirClient;
+        this.modelMapper = modelMapper;
+        this.configProperties = configProperties;
     }
 
     @Override
@@ -61,7 +55,7 @@ public class PatientServiceImpl implements PatientService {
         patientDto.setId(patient.getIdElement().getIdPart());
         patientDto.setBirthDate(patient.getBirthDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
         patientDto.setGenderCode(patient.getGender().toCode());
-        patientDto.setMrn(patientDto.getIdentifier().stream().filter(iden -> iden.getSystem().equalsIgnoreCase(configProperties.getPatient().getMrn().getCodeSystemOID())).findFirst().map(IdentifierDto::getValue));
+        patientDto.setMrn(patientDto.getIdentifier().stream().filter(iden -> iden.getOid().equalsIgnoreCase(configProperties.getPatient().getMrn().getCodeSystemOID()) || iden.getSystemDisplay().equalsIgnoreCase(configProperties.getPatient().getMrn().getDisplayName())).findFirst().map(IdentifierDto::getValue));
         patientDto.setIdentifier(patientDto.getIdentifier().stream().filter(iden -> !iden.getSystem().equalsIgnoreCase(configProperties.getPatient().getMrn().getCodeSystemOID())).collect(toList()));
 
         return patientDto;
