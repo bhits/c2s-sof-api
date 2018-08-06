@@ -32,10 +32,11 @@ public class LookUpUtil {
         return isValid;
     }
 
-    public static ValueSetDto convertConceptReferenceToValueSetDto(ValueSet.ConceptReferenceComponent conceptReferenceComponent) {
+    public static ValueSetDto convertConceptReferenceToValueSetDto(ValueSet.ConceptReferenceComponent conceptReferenceComponent, String codingSystemUrl) {
         ValueSetDto valueSetDto = new ValueSetDto();
         valueSetDto.setCode(conceptReferenceComponent.getCode());
         valueSetDto.setDisplay(conceptReferenceComponent.getDisplay());
+        valueSetDto.setSystem(codingSystemUrl);
         return valueSetDto;
     }
 
