@@ -4,7 +4,7 @@ import ca.uhn.fhir.rest.client.api.IGenericClient;
 import gov.samhsa.c2s.c2ssofapi.service.dto.LookupPathUrls;
 import gov.samhsa.c2s.c2ssofapi.service.dto.ValueSetDto;
 import gov.samhsa.c2s.c2ssofapi.service.exception.ResourceNotFoundException;
-import gov.samhsa.c2s.c2ssofapi.util.LookUpUtil;
+import gov.samhsa.c2s.c2ssofapi.service.util.LookUpUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.dstu3.model.ValueSet;
 import org.springframework.stereotype.Service;

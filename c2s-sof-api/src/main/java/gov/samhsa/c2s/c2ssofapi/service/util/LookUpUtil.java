@@ -1,4 +1,4 @@
-package gov.samhsa.c2s.c2ssofapi.util;
+package gov.samhsa.c2s.c2ssofapi.service.util;
 
 import gov.samhsa.c2s.c2ssofapi.service.dto.ValueSetDto;
 import gov.samhsa.c2s.c2ssofapi.service.exception.ResourceNotFoundException;
