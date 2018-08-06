@@ -7,6 +7,7 @@ import ca.uhn.fhir.rest.gclient.ReferenceClientParam;
 import ca.uhn.fhir.rest.gclient.TokenClientParam;
 import ca.uhn.fhir.validation.FhirValidator;
 import gov.samhsa.c2s.c2ssofapi.config.ConfigProperties;
+import gov.samhsa.c2s.c2ssofapi.constants.ConsentConstants;
 import gov.samhsa.c2s.c2ssofapi.service.constant.ProvenanceActivityEnum;
 import gov.samhsa.c2s.c2ssofapi.service.dto.AbstractCareTeamDto;
 import gov.samhsa.c2s.c2ssofapi.service.dto.ConsentDto;
@@ -68,19 +69,6 @@ import static java.util.stream.Collectors.toList;
 @Service
 @Slf4j
 public class ConsentServiceImpl implements ConsentService {
-    private static final String PSEUDO_ORGANIZATION_NAME = "Omnibus Care Plan (SAMHSA)";
-    private static final String PSEUDO_ORGANIZATION_TAX_ID = "530196960";
-
-    private static final String CONSENT_CUSTODIAN_CODE = "CST";
-    private static final String CONSENT_INFORMANT_RECIPIENT_CODE = "IRCP";
-
-    private static final String CONSENT_PURPOSE_OF_USE_CODING_SYSTEM = "http://hl7.org/fhir/v3/ActReason";
-    private static final String CONSENT_ACTION_CODE = "disclose";
-    private static final String CONSENT_ACTION_CODING_SYSTEM = "http://hl7.org/fhir/consentaction";
-    private static final String CONSENT_ACTION_DISPLAY = "Disclose";
-
-    private static final String CONTENT_TYPE = "application/pdf";
-    private static final Boolean OPERATED_BY_PATIENT = true;
 
     private final IGenericClient fhirClient;
     private final LookUpService lookUpService;
@@ -221,7 +209,7 @@ public class ConsentServiceImpl implements ConsentService {
                 Organization organization = (Organization) entry.getResource();
                 ReferenceDto referenceDto = new ReferenceDto();
                 referenceDto.setReference("Organization/" + organization.getIdElement().getIdPart());
-                referenceDto.setDisplay(PSEUDO_ORGANIZATION_NAME);
+                referenceDto.setDisplay(ConsentConstants.PSEUDO_ORGANIZATION_NAME);
                 generalConsentRelatedFieldDto.setFromActors(Collections.singletonList(referenceDto));
             });
 
@@ -335,7 +323,7 @@ public class ConsentServiceImpl implements ConsentService {
     private DetailedConsentDto convertConsentBundleEntryToConsentDto(Bundle.BundleEntryComponent fhirConsentDtoModel) {
         ConsentDto consentDto = modelMapper.map(fhirConsentDtoModel.getResource(), ConsentDto.class);
 
-        consentDto.getFromActor().stream().filter(member -> member.getDisplay().trim().equalsIgnoreCase(PSEUDO_ORGANIZATION_NAME.trim())).map(member -> true).forEach(consentDto::setGeneralDesignation);
+        consentDto.getFromActor().stream().filter(member -> member.getDisplay().trim().equalsIgnoreCase(ConsentConstants.PSEUDO_ORGANIZATION_NAME.trim())).map(member -> true).forEach(consentDto::setGeneralDesignation);
 
         Consent consent = (Consent) fhirConsentDtoModel.getResource();
 
@@ -359,7 +347,7 @@ public class ConsentServiceImpl implements ConsentService {
                 String patientID = consentDto.getPatient().getReference().replace("Patient/", "");
                 PatientDto patientDto = patientService.getPatientById(patientID, Optional.empty());
                 log.info("Generating consent PDF");
-                byte[] pdfBytes = consentPdfGenerator.generateConsentPdf(detailedConsentDto, patientDto, OPERATED_BY_PATIENT, Optional.empty());
+                byte[] pdfBytes = consentPdfGenerator.generateConsentPdf(detailedConsentDto, patientDto, ConsentConstants.OPERATED_BY_PATIENT, Optional.empty());
                 detailedConsentDto.setSourceAttachment(pdfBytes);
             }
 
@@ -418,7 +406,7 @@ public class ConsentServiceImpl implements ConsentService {
 
         try {
             log.info("Attest consent: Generating the attested PDF");
-            byte[] pdfBytes = consentPdfGenerator.generateConsentPdf(detailedConsentDto, patientDto, OPERATED_BY_PATIENT, Optional.empty());
+            byte[] pdfBytes = consentPdfGenerator.generateConsentPdf(detailedConsentDto, patientDto, ConsentConstants.OPERATED_BY_PATIENT, Optional.empty());
             consent.setSource(addAttachment(pdfBytes));
 
         } catch (IOException e) {
@@ -451,7 +439,7 @@ public class ConsentServiceImpl implements ConsentService {
 
         try {
             log.info("Revoke consent: Generating the Revocation PDF");
-            byte[] pdfBytes = consentRevocationPdfGenerator.generateConsentRevocationPdf(detailedConsentDto, patientDto, OPERATED_BY_PATIENT, Optional.empty());
+            byte[] pdfBytes = consentRevocationPdfGenerator.generateConsentRevocationPdf(detailedConsentDto, patientDto, ConsentConstants.OPERATED_BY_PATIENT, Optional.empty());
             consent.setSource(addAttachment(pdfBytes));
 
         } catch (IOException e) {
@@ -472,7 +460,7 @@ public class ConsentServiceImpl implements ConsentService {
 
     private Attachment addAttachment(byte[] pdfBytes) {
         Attachment attachment = new Attachment();
-        attachment.setContentType(CONTENT_TYPE);
+        attachment.setContentType(ConsentConstants.CONTENT_TYPE);
         attachment.setData(pdfBytes);
         return attachment;
     }
@@ -486,7 +474,7 @@ public class ConsentServiceImpl implements ConsentService {
 
         try {
             log.info("Generating consent PDF");
-            byte[] pdfBytes = consentPdfGenerator.generateConsentPdf(detailedConsentDto, patientDto, OPERATED_BY_PATIENT, Optional.empty());
+            byte[] pdfBytes = consentPdfGenerator.generateConsentPdf(detailedConsentDto, patientDto, ConsentConstants.OPERATED_BY_PATIENT, Optional.empty());
             return new PdfDto(pdfBytes);
 
         } catch (IOException e) {
@@ -515,9 +503,9 @@ public class ConsentServiceImpl implements ConsentService {
         //Set Action
         CodeableConcept actionConcept = new CodeableConcept();
         actionConcept.addCoding(
-                new Coding().setCode(CONSENT_ACTION_CODE)
-                        .setSystem(CONSENT_ACTION_CODING_SYSTEM)
-                        .setDisplay(CONSENT_ACTION_DISPLAY)
+                new Coding().setCode(ConsentConstants.CONSENT_ACTION_CODE)
+                        .setSystem(ConsentConstants.CONSENT_ACTION_CODING_SYSTEM)
+                        .setDisplay(ConsentConstants.CONSENT_ACTION_DISPLAY)
         );
         consent.getAction().add(actionConcept);
 
@@ -532,7 +520,7 @@ public class ConsentServiceImpl implements ConsentService {
                 Coding coding = new Coding();
                 coding.setDisplay((purpose.getDisplay() != null && !purpose.getDisplay().isEmpty()) ? purpose.getDisplay() : null)
                         .setCode((purpose.getCode() != null && !purpose.getCode().isEmpty()) ? purpose.getCode() : null)
-                        .setSystem((purpose.getSystem() != null && !purpose.getSystem().isEmpty()) ? purpose.getSystem() : CONSENT_PURPOSE_OF_USE_CODING_SYSTEM);
+                        .setSystem((purpose.getSystem() != null && !purpose.getSystem().isEmpty()) ? purpose.getSystem() : ConsentConstants.CONSENT_PURPOSE_OF_USE_CODING_SYSTEM);
                 return coding;
             }).collect(toList());
 
@@ -575,7 +563,7 @@ public class ConsentServiceImpl implements ConsentService {
             if (consentDto.isGeneralDesignation()) {
                 Consent.ConsentActorComponent fromActor = new Consent.ConsentActorComponent();
                 fromActor.setReference(FhirDtoUtil.mapReferenceDtoToReference(referenceDto))
-                        .setRole(FhirDtoUtil.convertValuesetDtoToCodeableConcept(FhirDtoUtil.convertCodeToValueSetDto(CONSENT_CUSTODIAN_CODE, lookUpService.getSecurityRole())));
+                        .setRole(FhirDtoUtil.convertValuesetDtoToCodeableConcept(FhirDtoUtil.convertCodeToValueSetDto(ConsentConstants.CONSENT_CUSTODIAN_CODE, lookUpService.getSecurityRole())));
                 actors.add(fromActor);
             }
         });
@@ -586,19 +574,19 @@ public class ConsentServiceImpl implements ConsentService {
                     .where(new ReferenceClientParam("subject").hasId(consentDto.getPatient().getReference()))
                     .returnBundle(Bundle.class).execute();
 
-            careTeamBundle.getEntry().stream().map(careTeamEntry -> (CareTeam) careTeamEntry.getResource()).map(careTeam -> convertCareTeamToActor(careTeam, FhirDtoUtil.convertCodeToValueSetDto(CONSENT_INFORMANT_RECIPIENT_CODE, lookUpService
+            careTeamBundle.getEntry().stream().map(careTeamEntry -> (CareTeam) careTeamEntry.getResource()).map(careTeam -> convertCareTeamToActor(careTeam, FhirDtoUtil.convertCodeToValueSetDto(ConsentConstants.CONSENT_INFORMANT_RECIPIENT_CODE, lookUpService
                     .getSecurityRole()))).forEach(actors::add);
             consent.setActor(actors);
         } else {
             List<Consent.ConsentActorComponent> fromActors = consentDto.getFromActor().stream().map(fromActor -> {
                 Consent.ConsentActorComponent from = new Consent.ConsentActorComponent();
-                from.setReference(FhirDtoUtil.mapReferenceDtoToReference(fromActor)).setRole(FhirDtoUtil.convertValuesetDtoToCodeableConcept(FhirDtoUtil.convertCodeToValueSetDto(CONSENT_CUSTODIAN_CODE, lookUpService.getSecurityRole())));
+                from.setReference(FhirDtoUtil.mapReferenceDtoToReference(fromActor)).setRole(FhirDtoUtil.convertValuesetDtoToCodeableConcept(FhirDtoUtil.convertCodeToValueSetDto(ConsentConstants.CONSENT_CUSTODIAN_CODE, lookUpService.getSecurityRole())));
                 return from;
             }).collect(toList());
 
             List<Consent.ConsentActorComponent> toActors = consentDto.getToActor().stream().map(toActor -> {
                 Consent.ConsentActorComponent to = new Consent.ConsentActorComponent();
-                to.setReference(FhirDtoUtil.mapReferenceDtoToReference(toActor)).setRole(FhirDtoUtil.convertValuesetDtoToCodeableConcept(FhirDtoUtil.convertCodeToValueSetDto(CONSENT_INFORMANT_RECIPIENT_CODE, lookUpService.getSecurityRole())));
+                to.setReference(FhirDtoUtil.mapReferenceDtoToReference(toActor)).setRole(FhirDtoUtil.convertValuesetDtoToCodeableConcept(FhirDtoUtil.convertCodeToValueSetDto(ConsentConstants.CONSENT_INFORMANT_RECIPIENT_CODE, lookUpService.getSecurityRole())));
                 return to;
             }).collect(toList());
 
@@ -631,11 +619,10 @@ public class ConsentServiceImpl implements ConsentService {
 
     private List<Coding> getIncludeCodingList(List<ValueSetDto> medicalInfoList) {
         // Set Exempt portion
-        String systemUrl = configProperties.getConsent().getCodeSystem();
         // Get "share" categories from consent
         return medicalInfoList
                 .stream()
-                .map(valueSetDto -> new Coding(systemUrl, valueSetDto.getCode(), valueSetDto.getDisplay()))
+                .map(valueSetDto -> new Coding(valueSetDto.getSystem(), valueSetDto.getCode(), valueSetDto.getDisplay()))
                 .collect(toList());
     }
 
@@ -664,7 +651,7 @@ public class ConsentServiceImpl implements ConsentService {
                     .returnBundle(Bundle.class).execute();
             boolean checkFromBundle = consentBundle.getEntry().stream().anyMatch(consentBundleEntry -> {
                 Consent consent = (Consent) consentBundleEntry.getResource();
-                List<String> fromActor = getReferenceOfCareTeam(consent, CONSENT_CUSTODIAN_CODE);
+                List<String> fromActor = getReferenceOfCareTeam(consent, ConsentConstants.CONSENT_CUSTODIAN_CODE);
 
                 Optional<String> pseudoOrgRef = getPseudoOrganization().getEntry().stream().findFirst().map(pseudoOrg -> {
                     Organization organization = (Organization) pseudoOrg.getResource();
@@ -695,14 +682,14 @@ public class ConsentServiceImpl implements ConsentService {
 
     private Bundle getPseudoOrganization() {
         Bundle pseudoOrg = fhirClient.search().forResource(Organization.class)
-                .where(new TokenClientParam("identifier").exactly().code(PSEUDO_ORGANIZATION_TAX_ID))
+                .where(new TokenClientParam("identifier").exactly().code(ConsentConstants.PSEUDO_ORGANIZATION_TAX_ID))
                 .returnBundle(Bundle.class)
                 .execute();
         if (pseudoOrg == null || pseudoOrg.isEmpty()) {
             //Create Pseudo Org
             Organization org = new Organization();
             org.setActive(true);
-            org.setName(PSEUDO_ORGANIZATION_TAX_ID);
+            org.setName(ConsentConstants.PSEUDO_ORGANIZATION_TAX_ID);
             Identifier id = new Identifier().setSystem("urn:oid:2.16.840.1.113883.4.4").setValue("530196960");
             org.setIdentifier(Collections.singletonList(id));
             ContactPoint phoneContactPoint = new ContactPoint().setRank(1).setSystem(ContactPoint.ContactPointSystem.valueOf("PHONE")).setValue("(240)2762827");
@@ -732,7 +719,7 @@ public class ConsentServiceImpl implements ConsentService {
             //Create TO DO Activity Definition
             FhirOperationUtil.createFhirResource(fhirClient, activityDefinition, ResourceType.ActivityDefinition.name());
             return fhirClient.search().forResource(Organization.class)
-                    .where(new TokenClientParam("identifier").exactly().code(PSEUDO_ORGANIZATION_TAX_ID))
+                    .where(new TokenClientParam("identifier").exactly().code(ConsentConstants.PSEUDO_ORGANIZATION_TAX_ID))
                     .returnBundle(Bundle.class)
                     .execute();
         }
