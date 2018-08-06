@@ -4,7 +4,7 @@ import ca.uhn.fhir.rest.client.api.IGenericClient;
 import gov.samhsa.c2s.c2ssofapi.service.dto.LookupPathUrls;
 import gov.samhsa.c2s.c2ssofapi.service.dto.ValueSetDto;
 import gov.samhsa.c2s.c2ssofapi.service.exception.ResourceNotFoundException;
-import gov.samhsa.c2s.c2ssofapi.util.LookUpUtil;
+import gov.samhsa.c2s.c2ssofapi.service.util.LookUpUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.dstu3.model.ValueSet;
 import org.springframework.stereotype.Service;
@@ -61,10 +61,15 @@ public class LookUpServiceImpl implements LookUpService {
     }
 
     private List<ValueSetDto> getValueSetsByValueSetCompose(String urlPath, String type) {
-        List<ValueSetDto> valueSets;
+        List<ValueSetDto> valueSets = new ArrayList<>();
         ValueSet response = getValueSets(urlPath, type);
         List<ValueSet.ConceptSetComponent> valueSetList = response.getCompose().getInclude();
-        valueSets = valueSetList.stream().flatMap(obj -> obj.getConcept().stream()).map(LookUpUtil::convertConceptReferenceToValueSetDto).collect(Collectors.toList());
+         for(ValueSet.ConceptSetComponent conceptComponent: valueSetList){
+            String codingSystemUrl = conceptComponent.getSystem();
+            List<ValueSet.ConceptReferenceComponent> conceptCodesList = conceptComponent.getConcept();
+            List<ValueSetDto> conceptCodeValueSetList = conceptCodesList.stream().map(c -> LookUpUtil.convertConceptReferenceToValueSetDto(c, codingSystemUrl)).collect(Collectors.toList());
+            valueSets.addAll(conceptCodeValueSetList);
+        }
         log.info("Found " + valueSets.size() + type + ".");
         return valueSets;
     }
