@@ -67,9 +67,6 @@ public class ConfigProperties {
         @NotNull
         private String identifierSystem;
 
-        @NotNull
-        private String codeSystem;
-
         @Valid
         private Pagination pagination = new Pagination();
 
