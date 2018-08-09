@@ -41,7 +41,7 @@ public class ProvenanceUtil {
         provenance.setRecorded(new Date());
 
         //activity
-        if (FhirResourceUtil.isStringNotNullAndNotEmpty(provenanceActivityEnum.toString())) {
+        if (provenanceActivityEnum != null && FhirResourceUtil.isStringNotNullAndNotEmpty(provenanceActivityEnum.toString())) {
             Coding coding = new Coding();
             coding.setCode(provenanceActivityEnum.toString());
             coding.setSystem(ProvenanceConstants.PROVENANCE_ACTIVITY_TYPE_CODING_SYSTEM);
