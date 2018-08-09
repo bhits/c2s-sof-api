@@ -1,13 +1,15 @@
 package gov.samhsa.c2s.c2ssofapi.service;
 
 import ca.uhn.fhir.rest.client.api.IGenericClient;
+import gov.samhsa.c2s.c2ssofapi.constants.ProvenanceConstants;
 import gov.samhsa.c2s.c2ssofapi.service.constant.ProvenanceActivityEnum;
+import gov.samhsa.c2s.c2ssofapi.service.util.FhirResourceUtil;
 import org.hl7.fhir.dstu3.model.Coding;
 import org.hl7.fhir.dstu3.model.Provenance;
 import org.hl7.fhir.dstu3.model.Reference;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -39,9 +41,13 @@ public class ProvenanceUtil {
         provenance.setRecorded(new Date());
 
         //activity
-        Coding coding = new Coding();
-        coding.setCode(provenanceActivityEnum.toString());
-        provenance.setActivity(coding);
+        if (FhirResourceUtil.isStringNotNullAndNotEmpty(provenanceActivityEnum.toString())) {
+            Coding coding = new Coding();
+            coding.setCode(provenanceActivityEnum.toString());
+            coding.setSystem(ProvenanceConstants.PROVENANCE_ACTIVITY_TYPE_CODING_SYSTEM);
+            coding.setDisplay(provenanceActivityEnum.toString().toLowerCase());
+            provenance.setActivity(coding);
+        }
 
         //agent.whoReference
         if (loggedInUser.isPresent()) {
@@ -50,7 +56,7 @@ public class ProvenanceUtil {
             whoRef.setReference(loggedInUser.get());
             agent.setWho(whoRef);
 
-            provenance.setAgent(Arrays.asList(agent));
+            provenance.setAgent(Collections.singletonList(agent));
         }
 
         fhirClient.create().resource(provenance).execute();
