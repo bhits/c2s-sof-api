@@ -28,22 +28,34 @@ public class LookUpController {
     public LookUpDataDto getAllLookUpValues(@RequestParam(value = "lookUpTypeList", required = false) List<String> lookUpTypeList) {
         LookUpDataDto lookUpData = new LookUpDataDto();
 
-        //Consent State Codes
+        // Consent State Codes
         if (lookUpTypeList == null || lookUpTypeList.size() == 0 || lookUpTypeList.stream().anyMatch(LookUpTypeEnum.CONSENT_STATE_CODES.name()::equalsIgnoreCase)) {
             log.info("Getting look up values for " + LookUpTypeEnum.CONSENT_STATE_CODES.name());
             lookUpData.setConsentStateCodes(lookUpService.getConsentStateCodes());
         }
 
-        //Purpose of use
+        // Purpose of use
         if (lookUpTypeList == null || lookUpTypeList.size() == 0 || lookUpTypeList.stream().anyMatch(LookUpTypeEnum.PURPOSE_OF_USE.name()::equalsIgnoreCase)) {
             log.info("Getting look up values for " + LookUpTypeEnum.PURPOSE_OF_USE.name());
             lookUpData.setPurposeOfUse(lookUpService.getConsentPurposeOfUse());
         }
 
-        //Security Label
+        // Security Label
         if (lookUpTypeList == null || lookUpTypeList.size() == 0 || lookUpTypeList.stream().anyMatch(LookUpTypeEnum.SECURITY_LABEL.name()::equalsIgnoreCase)) {
             log.info("Getting look up values for " + LookUpTypeEnum.SECURITY_LABEL.name());
             lookUpData.setSecurityLabel(lookUpService.getConsentSecurityLabel());
+        }
+
+        // Security Role
+        if (lookUpTypeList == null || lookUpTypeList.size() == 0 || lookUpTypeList.stream().anyMatch(LookUpTypeEnum.CONSENT_SECURITY_ROLE.name()::equalsIgnoreCase)) {
+            log.info("Getting look up values for " + LookUpTypeEnum.CONSENT_SECURITY_ROLE.name());
+            lookUpData.setConsentSecurityRole(lookUpService.getConsentSecurityRole());
+        }
+
+        // Consent Action
+        if (lookUpTypeList == null || lookUpTypeList.size() == 0 || lookUpTypeList.stream().anyMatch(LookUpTypeEnum.CONSENT_ACTION.name()::equalsIgnoreCase)) {
+            log.info("Getting look up values for " + LookUpTypeEnum.CONSENT_ACTION.name());
+            lookUpData.setConsentAction(lookUpService.getConsentAction());
         }
         return lookUpData;
     }
