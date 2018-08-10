@@ -17,8 +17,12 @@ import java.util.List;
 @RequestMapping("/lookups")
 public class LookUpController {
 
+    private final LookUpService lookUpService;
+
     @Autowired
-    LookUpService lookUpService;
+    public LookUpController(LookUpService lookUpService) {
+        this.lookUpService = lookUpService;
+    }
 
     @GetMapping()
     public LookUpDataDto getAllLookUpValues(@RequestParam(value = "lookUpTypeList", required = false) List<String> lookUpTypeList) {
@@ -26,16 +30,19 @@ public class LookUpController {
 
         //Consent State Codes
         if (lookUpTypeList == null || lookUpTypeList.size() == 0 || lookUpTypeList.stream().anyMatch(LookUpTypeEnum.CONSENT_STATE_CODES.name()::equalsIgnoreCase)) {
+            log.info("Getting look up values for " + LookUpTypeEnum.CONSENT_STATE_CODES.name());
             lookUpData.setConsentStateCodes(lookUpService.getConsentStateCodes());
         }
 
         //Purpose of use
         if (lookUpTypeList == null || lookUpTypeList.size() == 0 || lookUpTypeList.stream().anyMatch(LookUpTypeEnum.PURPOSE_OF_USE.name()::equalsIgnoreCase)) {
+            log.info("Getting look up values for " + LookUpTypeEnum.PURPOSE_OF_USE.name());
             lookUpData.setPurposeOfUse(lookUpService.getPurposeOfUse());
         }
 
         //Security Label
         if (lookUpTypeList == null || lookUpTypeList.size() == 0 || lookUpTypeList.stream().anyMatch(LookUpTypeEnum.SECURITY_LABEL.name()::equalsIgnoreCase)) {
+            log.info("Getting look up values for " + LookUpTypeEnum.SECURITY_LABEL.name());
             lookUpData.setSecurityLabel(lookUpService.getSecurityLabel());
         }
         return lookUpData;
