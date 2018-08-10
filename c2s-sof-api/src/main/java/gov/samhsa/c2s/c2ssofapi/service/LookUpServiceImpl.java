@@ -30,13 +30,37 @@ public class LookUpServiceImpl implements LookUpService {
     }
 
     @Override
-    public List<ValueSetDto> getPurposeOfUse() {
+    public List<ValueSetDto> getConsentPurposeOfUse() {
         return getValueSetsByValueSetCompose(LookupPathUrls.PURPOSE_OF_USE.getUrlPath(), LookupPathUrls.PURPOSE_OF_USE.getType());
     }
 
     @Override
-    public List<ValueSetDto> getSecurityLabel() {
+    public List<ValueSetDto> getConsentSecurityLabel() {
         return getValueSetsByValueSetCompose(LookupPathUrls.SECURITY_LABEL.getUrlPath(), LookupPathUrls.SECURITY_LABEL.getType());
+    }
+
+    @Override
+    public List<ValueSetDto> getConsentSecurityRole() {
+        List<ValueSetDto> securityRoleList = new ArrayList<>();
+        ValueSet response = getValueSets(LookupPathUrls.CONSENT_SECURITY_ROLE.getUrlPath(), LookupPathUrls.CONSENT_SECURITY_ROLE.getType());
+        if (LookUpUtil.isValueSetAvailableInServer(response, LookupPathUrls.CONSENT_SECURITY_ROLE.getType())) {
+            List<ValueSet.ValueSetExpansionContainsComponent> valueSetList = response.getExpansion().getContains();
+            securityRoleList = valueSetList.stream().map(LookUpUtil::convertExpansionComponentToValueSetDto).collect(Collectors.toList());
+        }
+        log.info("Found " + securityRoleList.size() + " security role.");
+        return securityRoleList;
+    }
+
+    @Override
+    public List<ValueSetDto> getConsentAction() {
+        List<ValueSetDto> consentActionList = new ArrayList<>();
+        ValueSet response = getValueSets(LookupPathUrls.CONSENT_ACTION.getUrlPath(), LookupPathUrls.CONSENT_ACTION.getType());
+        if (LookUpUtil.isValueSetAvailableInServer(response, LookupPathUrls.CONSENT_ACTION.getType())) {
+            List<ValueSet.ValueSetExpansionContainsComponent> valueSetList = response.getExpansion().getContains();
+            consentActionList = valueSetList.stream().map(LookUpUtil::convertExpansionComponentToValueSetDto).collect(Collectors.toList());
+        }
+        log.info("Found " + consentActionList.size() + " consent Action.");
+        return consentActionList;
     }
 
     private ValueSet getValueSets(String urlPath, String type) {
@@ -64,7 +88,7 @@ public class LookUpServiceImpl implements LookUpService {
         List<ValueSetDto> valueSets = new ArrayList<>();
         ValueSet response = getValueSets(urlPath, type);
         List<ValueSet.ConceptSetComponent> valueSetList = response.getCompose().getInclude();
-         for(ValueSet.ConceptSetComponent conceptComponent: valueSetList){
+        for (ValueSet.ConceptSetComponent conceptComponent : valueSetList) {
             String codingSystemUrl = conceptComponent.getSystem();
             List<ValueSet.ConceptReferenceComponent> conceptCodesList = conceptComponent.getConcept();
             List<ValueSetDto> conceptCodeValueSetList = conceptCodesList.stream().map(c -> LookUpUtil.convertConceptReferenceToValueSetDto(c, codingSystemUrl)).collect(Collectors.toList());
@@ -73,30 +97,4 @@ public class LookUpServiceImpl implements LookUpService {
         log.info("Found " + valueSets.size() + type + ".");
         return valueSets;
     }
-
-    @Override
-    public List<ValueSetDto> getSecurityRole() {
-        List<ValueSetDto> securityRoleList = new ArrayList<>();
-        ValueSet response = getValueSets(LookupPathUrls.CONSENT_SECURITY_ROLE.getUrlPath(), LookupPathUrls.CONSENT_SECURITY_ROLE.getType());
-        if (LookUpUtil.isValueSetAvailableInServer(response, LookupPathUrls.CONSENT_SECURITY_ROLE.getType())) {
-            List<ValueSet.ValueSetExpansionContainsComponent> valueSetList = response.getExpansion().getContains();
-            securityRoleList = valueSetList.stream().map(LookUpUtil::convertExpansionComponentToValueSetDto).collect(Collectors.toList());
-        }
-        log.info("Found " + securityRoleList.size() + " security role.");
-        return securityRoleList;
-    }
-
-    @Override
-    public List<ValueSetDto> getConsentAction() {
-        List<ValueSetDto> consentActionList = new ArrayList<>();
-        ValueSet response = getValueSets(LookupPathUrls.CONSENT_ACTION.getUrlPath(), LookupPathUrls.CONSENT_ACTION.getType());
-        if (LookUpUtil.isValueSetAvailableInServer(response, LookupPathUrls.CONSENT_ACTION.getType())) {
-            List<ValueSet.ValueSetExpansionContainsComponent> valueSetList = response.getExpansion().getContains();
-            consentActionList = valueSetList.stream().map(LookUpUtil::convertExpansionComponentToValueSetDto).collect(Collectors.toList());
-        }
-        log.info("Found " + consentActionList.size() + " consent Action.");
-        return consentActionList;
-    }
-
-
 }

@@ -37,13 +37,13 @@ public class LookUpController {
         //Purpose of use
         if (lookUpTypeList == null || lookUpTypeList.size() == 0 || lookUpTypeList.stream().anyMatch(LookUpTypeEnum.PURPOSE_OF_USE.name()::equalsIgnoreCase)) {
             log.info("Getting look up values for " + LookUpTypeEnum.PURPOSE_OF_USE.name());
-            lookUpData.setPurposeOfUse(lookUpService.getPurposeOfUse());
+            lookUpData.setPurposeOfUse(lookUpService.getConsentPurposeOfUse());
         }
 
         //Security Label
         if (lookUpTypeList == null || lookUpTypeList.size() == 0 || lookUpTypeList.stream().anyMatch(LookUpTypeEnum.SECURITY_LABEL.name()::equalsIgnoreCase)) {
             log.info("Getting look up values for " + LookUpTypeEnum.SECURITY_LABEL.name());
-            lookUpData.setSecurityLabel(lookUpService.getSecurityLabel());
+            lookUpData.setSecurityLabel(lookUpService.getConsentSecurityLabel());
         }
         return lookUpData;
     }
