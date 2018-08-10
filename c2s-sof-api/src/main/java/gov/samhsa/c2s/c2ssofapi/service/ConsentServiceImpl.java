@@ -213,8 +213,8 @@ public class ConsentServiceImpl implements ConsentService {
                 generalConsentRelatedFieldDto.setFromActors(Collections.singletonList(referenceDto));
             });
 
-            generalConsentRelatedFieldDto.setPurposeOfUse(FhirDtoUtil.convertCodeToValueSetDto(V3ActReason.TREAT.toCode(), lookUpService.getPurposeOfUse()));
-            generalConsentRelatedFieldDto.setMedicalInformation(lookUpService.getSecurityLabel());
+            generalConsentRelatedFieldDto.setPurposeOfUse(FhirDtoUtil.convertCodeToValueSetDto(V3ActReason.TREAT.toCode(), lookUpService.getConsentPurposeOfUse()));
+            generalConsentRelatedFieldDto.setMedicalInformation(lookUpService.getConsentSecurityLabel());
 
         } else {
             throw new ResourceNotFoundException("No care teams are present.");
@@ -329,9 +329,9 @@ public class ConsentServiceImpl implements ConsentService {
 
         //setting medical info type
         if (consentDto.getMedicalInformation() != null) {
-            int totalMedicalInfo = lookUpService.getSecurityLabel() != null ?
-                    lookUpService.getSecurityLabel().size() : 0;
-            if (consentDto.getMedicalInformation().size() < lookUpService.getSecurityLabel().size()) {
+            int totalMedicalInfo = lookUpService.getConsentSecurityLabel() != null ?
+                    lookUpService.getConsentSecurityLabel().size() : 0;
+            if (consentDto.getMedicalInformation().size() < lookUpService.getConsentSecurityLabel().size()) {
                 consentDto.setConsentMedicalInfoType(ConsentMedicalInfoType.SHARE_SPECIFIC);
             } else {
                 consentDto.setConsentMedicalInfoType(ConsentMedicalInfoType.SHARE_ALL);
@@ -563,7 +563,7 @@ public class ConsentServiceImpl implements ConsentService {
             if (consentDto.isGeneralDesignation()) {
                 Consent.ConsentActorComponent fromActor = new Consent.ConsentActorComponent();
                 fromActor.setReference(FhirDtoUtil.mapReferenceDtoToReference(referenceDto))
-                        .setRole(FhirDtoUtil.convertValuesetDtoToCodeableConcept(FhirDtoUtil.convertCodeToValueSetDto(ConsentConstants.CONSENT_CUSTODIAN_CODE, lookUpService.getSecurityRole())));
+                        .setRole(FhirDtoUtil.convertValuesetDtoToCodeableConcept(FhirDtoUtil.convertCodeToValueSetDto(ConsentConstants.CONSENT_CUSTODIAN_CODE, lookUpService.getConsentSecurityRole())));
                 actors.add(fromActor);
             }
         });
@@ -575,18 +575,18 @@ public class ConsentServiceImpl implements ConsentService {
                     .returnBundle(Bundle.class).execute();
 
             careTeamBundle.getEntry().stream().map(careTeamEntry -> (CareTeam) careTeamEntry.getResource()).map(careTeam -> convertCareTeamToActor(careTeam, FhirDtoUtil.convertCodeToValueSetDto(ConsentConstants.CONSENT_INFORMANT_RECIPIENT_CODE, lookUpService
-                    .getSecurityRole()))).forEach(actors::add);
+                    .getConsentSecurityRole()))).forEach(actors::add);
             consent.setActor(actors);
         } else {
             List<Consent.ConsentActorComponent> fromActors = consentDto.getFromActor().stream().map(fromActor -> {
                 Consent.ConsentActorComponent from = new Consent.ConsentActorComponent();
-                from.setReference(FhirDtoUtil.mapReferenceDtoToReference(fromActor)).setRole(FhirDtoUtil.convertValuesetDtoToCodeableConcept(FhirDtoUtil.convertCodeToValueSetDto(ConsentConstants.CONSENT_CUSTODIAN_CODE, lookUpService.getSecurityRole())));
+                from.setReference(FhirDtoUtil.mapReferenceDtoToReference(fromActor)).setRole(FhirDtoUtil.convertValuesetDtoToCodeableConcept(FhirDtoUtil.convertCodeToValueSetDto(ConsentConstants.CONSENT_CUSTODIAN_CODE, lookUpService.getConsentSecurityRole())));
                 return from;
             }).collect(toList());
 
             List<Consent.ConsentActorComponent> toActors = consentDto.getToActor().stream().map(toActor -> {
                 Consent.ConsentActorComponent to = new Consent.ConsentActorComponent();
-                to.setReference(FhirDtoUtil.mapReferenceDtoToReference(toActor)).setRole(FhirDtoUtil.convertValuesetDtoToCodeableConcept(FhirDtoUtil.convertCodeToValueSetDto(ConsentConstants.CONSENT_INFORMANT_RECIPIENT_CODE, lookUpService.getSecurityRole())));
+                to.setReference(FhirDtoUtil.mapReferenceDtoToReference(toActor)).setRole(FhirDtoUtil.convertValuesetDtoToCodeableConcept(FhirDtoUtil.convertCodeToValueSetDto(ConsentConstants.CONSENT_INFORMANT_RECIPIENT_CODE, lookUpService.getConsentSecurityRole())));
                 return to;
             }).collect(toList());
 
@@ -609,7 +609,7 @@ public class ConsentServiceImpl implements ConsentService {
         exceptComponent.setType(Consent.ConsentExceptType.PERMIT);
         if (consentDto.isGeneralDesignation()) {
             // share all
-            exceptComponent.setSecurityLabel(getIncludeCodingList(lookUpService.getSecurityLabel()));
+            exceptComponent.setSecurityLabel(getIncludeCodingList(lookUpService.getConsentSecurityLabel()));
         } else {
             // share the one user selects
             exceptComponent.setSecurityLabel(getIncludeCodingList(consentDto.getMedicalInformation()));

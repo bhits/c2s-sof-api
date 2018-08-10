@@ -15,4 +15,6 @@ public class LookUpDataDto {
     List<ValueSetDto> consentStateCodes;
     List<ValueSetDto> securityLabel;
     List<ValueSetDto> purposeOfUse;
+    List<ValueSetDto> consentSecurityRole;
+    List<ValueSetDto> consentAction;
 }

@@ -23,7 +23,6 @@ public enum LookupPathUrls {
         return urlPath;
     }
 
-    // Todo: Need to clean up unused/unnecessary constant variables and rename PROVIDER_ROLE_PATH to PRACTITIONER_ROLE_PATH and
     private static class Constants {
         static final String CONSENT_STATE_PATH = "/ValueSet/$expand?url=http://hl7.org/fhir/ValueSet/consent-state-codes";
         static final String PURPOSE_OF_USE_PATH = "/ValueSet/ocp-purposeofuse";
