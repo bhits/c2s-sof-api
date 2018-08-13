@@ -5,6 +5,9 @@ import gov.samhsa.c2s.c2ssofapi.service.exception.ResourceNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.dstu3.model.ValueSet;
 
+import java.util.Comparator;
+import java.util.List;
+
 @Slf4j
 public class LookUpUtil {
 
@@ -46,5 +49,11 @@ public class LookUpUtil {
         valueSetDto.setCode(expansionComponent.getCode());
         valueSetDto.setDisplay(expansionComponent.getDisplay());
         return valueSetDto;
+    }
+
+    public static void sortValueSets(List<ValueSetDto> valueSetList){
+        if(valueSetList != null && !valueSetList.isEmpty()){
+            valueSetList.sort(Comparator.comparing(v -> v.getDisplay() != null? v.getDisplay() : v.getCode()));
+        }
     }
 }

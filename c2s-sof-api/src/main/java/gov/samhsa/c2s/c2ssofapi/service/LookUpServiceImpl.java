@@ -47,6 +47,7 @@ public class LookUpServiceImpl implements LookUpService {
             List<ValueSet.ValueSetExpansionContainsComponent> valueSetList = response.getExpansion().getContains();
             securityRoleList = valueSetList.stream().map(LookUpUtil::convertExpansionComponentToValueSetDto).collect(Collectors.toList());
         }
+        LookUpUtil.sortValueSets(securityRoleList);
         log.info("Found " + securityRoleList.size() + " security role.");
         return securityRoleList;
     }
@@ -59,6 +60,7 @@ public class LookUpServiceImpl implements LookUpService {
             List<ValueSet.ValueSetExpansionContainsComponent> valueSetList = response.getExpansion().getContains();
             consentActionList = valueSetList.stream().map(LookUpUtil::convertExpansionComponentToValueSetDto).collect(Collectors.toList());
         }
+        LookUpUtil.sortValueSets(consentActionList);
         log.info("Found " + consentActionList.size() + " consent Action.");
         return consentActionList;
     }
@@ -80,6 +82,7 @@ public class LookUpServiceImpl implements LookUpService {
         ValueSet response = getValueSets(urlPath, type);
         List<ValueSet.ValueSetExpansionContainsComponent> valueSetList = response.getExpansion().getContains();
         valueSets = valueSetList.stream().map(LookUpUtil::convertExpansionComponentToValueSetDto).collect(Collectors.toList());
+        LookUpUtil.sortValueSets(valueSets);
         log.info("Found " + valueSets.size() + type + ".");
         return valueSets;
     }
@@ -94,6 +97,7 @@ public class LookUpServiceImpl implements LookUpService {
             List<ValueSetDto> conceptCodeValueSetList = conceptCodesList.stream().map(c -> LookUpUtil.convertConceptReferenceToValueSetDto(c, codingSystemUrl)).collect(Collectors.toList());
             valueSets.addAll(conceptCodeValueSetList);
         }
+        LookUpUtil.sortValueSets(valueSets);
         log.info("Found " + valueSets.size() + type + ".");
         return valueSets;
     }
